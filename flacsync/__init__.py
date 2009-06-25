@@ -14,9 +14,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-   Recursively mirrors FLAC audio files to AAC. The source FLAC files sourced
-   can be filtered by sub-directory in order to limit the files converted. The
-   script will also attempt to retain all meta-data fields in the output files.
+   Recursively mirror a directory of FLAC audio files to AAC. Source files can
+   be filtered (by sub-directory, or fully path) in order to limit the files
+   converted. The script will also attempt to retain all meta-data fields in
+   the output files.
 
    At a Glance
    ===========
