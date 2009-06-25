@@ -4,7 +4,7 @@
    can be filtered by sub-directory in order to limit the files converted. The
    script will also attempt to retain all meta-data fields in the output files.
 
-   At A Glance
+   At a Glance
    ===========
 
    * Mirror directory tree of FLAC files to AAC (using NeroAacEnc).
@@ -49,7 +49,6 @@ def print_status( file_, count, total, dirs ):
    sys.stdout.flush()
 
 
-#############################################################################
 def process_flac( opts, f, total, count, dirs ):
    """Perform all process steps to convert every FLAC file to the defined
    output format."""
@@ -57,8 +56,7 @@ def process_flac( opts, f, total, count, dirs ):
       # increment counter
       count.value += 1
       print_status( f, count.value, total, dirs)
-      EncClass = ENCODERS[opts.enc_type]
-      e = EncClass( src=f, q=opts.aac_q, base_dir=opts.base_dir,
+      e = opts.EncClass( src=f, q=opts.aac_q, base_dir=opts.base_dir,
             dest_dir=opts.dest_dir ) # instantiate the encoder
       encoded = e.encode( opts.force )
       if encoded:
@@ -192,6 +190,9 @@ def get_opts( argv ):
       print( "ERROR: '%s' is not a valid encoder !!" % (opts.enc_type,) )
       sys.exit(-1)
 
+   # set encoder
+   opts.EncClass = ENCODERS[opts.enc_type]
+
    # handle positional arguments
    opts.base_dir = os.path.abspath(args[0])
    opts.sources = normalize_sources( opts.base_dir, args[1:] )
@@ -205,6 +206,10 @@ def main( argv=None ):
    opts = get_opts( argv )
    # use base dir and input filter to locate all input files
    flacs = get_src_files( opts.base_dir, opts.sources )
+   # filter out files that do not need to be encoded
+   flacs = (f for f in flacs if not
+            opts.EncClass( src=f, base_dir=opts.base_dir,
+               dest_dir=opts.dest_dir).skip_encode() )
 
    # remove orphans, if defined
    if opts.del_orphans:

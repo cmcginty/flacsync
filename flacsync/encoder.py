@@ -20,13 +20,18 @@ THUMBSIZE = 250,250
 
 
 #############################################################################
-class Encoder(object):
+class _Encoder(object):
    # dimensions of cover thumbnails in pixels
    def __init__( self, src, ext, base_dir, dest_dir, **kwargs ):
-      super( Encoder, self).__init__()
+      super( _Encoder, self).__init__()
       self.src = src
       self.dst = util.fname(src,base_dir,dest_dir,ext)
       self.cover = self._get_cover()
+
+   def skip_encode( self ):
+      "Return 'True' if entire enocde step can be skipped"
+      if not self._is_newer() and not self._is_cover_newer():
+         return True
 
    def _is_newer( self ):
       return (not os.path.exists(self.dst) or
@@ -76,8 +81,8 @@ class Encoder(object):
 
 
 #############################################################################
-class AacEncoder( Encoder ):
-   def __init__( self, q, **kwargs  ):
+class AacEncoder( _Encoder ):
+   def __init__( self, q=None, **kwargs  ):
       super( AacEncoder, self).__init__( ext='.m4a', **kwargs)
       self.q = q
 
