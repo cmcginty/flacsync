@@ -55,7 +55,7 @@ def print_status( file_, count, total, dirs ):
    if not dir_ in dirs:
       # print current directory
       print '-'*30
-      print '%s/...' % (dir_[:78],)
+      print '%s/...' % (dir_[:74],)
       dirs[dir_] = True
    # print input file
    pos = '[%d of %d]' % (count,total)
