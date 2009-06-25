@@ -13,4 +13,13 @@
          cd flacsync-*
          sudo make install
 
-2. View online docs or :file:`README.txt` for usage instructions.
+2. Install the Nero AAC Code binaries.
+
+  * The archive is located at `Nero AAC Codec Download Page`_
+  * Extract the archive files **neroAacEnc** and **neroAacTag** to any
+    directory defined in your PATH statement. A recommended location would be
+    either ``/usr/bin`` or ``/usr/local/bin``.
+
+3. Review the usage instruction by running :command:`flacsysnc -h`.
+
+.. Nero AAC Codec Download Page: http://www.nero.com/eng/downloads-nerodigital-nero-aac-codec.php
