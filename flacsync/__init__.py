@@ -35,13 +35,28 @@ ENCODERS = {'aac':encoder.AacEncoder }
 
 
 #############################################################################
-def process_flac( opts, f ):
+def print_status( file_, count, total, dirs ):
+   """Output progress of encoding to terminal."""
+   dir_ = os.path.dirname(file_)
+   if not dir_ in dirs:
+      # print current directory
+      print '-'*30
+      print '%s/...' % (dir_[:78],)
+      dirs[dir_] = True
+   # print input file
+   pos = '[%d of %d]' % (count,total)
+   print '%15s %-60s' % (pos, os.path.basename(file_)[:60],)
+   sys.stdout.flush()
+
+
+#############################################################################
+def process_flac( opts, f, total, count, dirs ):
    """Perform all process steps to convert every FLAC file to the defined
    output format."""
    try:
-      # print input file
-      print '\t',
-      print os.path.basename(f)
+      # increment counter
+      count.value += 1
+      print_status( f, count.value, total, dirs)
       EncClass = ENCODERS[opts.enc_type]
       e = EncClass( src=f, q=opts.aac_q, base_dir=opts.base_dir,
             dest_dir=opts.dest_dir ) # instantiate the encoder
@@ -196,10 +211,15 @@ def main( argv=None ):
       del_dest_orphans( opts.dest_dir, opts.base_dir, opts.sources)
 
    # create mp Pool
+   p = multiprocessing.Pool( opts.thread_count )
+   flacs = list(flacs)
+   total = len(flacs)
+   m = multiprocessing.Manager()
+   count = m.Value('i', 0) # shared file counter
+   dirs  = m.dict() # shared dir map
    try:
-      p = multiprocessing.Pool( opts.thread_count )
       for f in flacs:
-         p.apply_async( process_flac, args=(opts, f))
+         p.apply_async( process_flac, args=(opts, f, total, count, dirs))
 
       p.close()
       p.join()
