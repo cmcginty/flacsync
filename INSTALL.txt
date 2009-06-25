@@ -1,0 +1,16 @@
+1. Any one of the following command will install *flacsync*. Make sure to run as
+   ``root`` user:
+
+   a. Use :command:`easy_install` from the `setuptools package
+      <http://peak.telecommunity.com/DevCenter/EasyInstall]>`_::
+
+         sudo easy_install flacsync
+
+   b. Download the source distribution file and install from the
+      command line::
+
+         tar xzf flacsync-*.tar.gz
+         cd flacsync-*
+         sudo make install
+
+2. View online docs or :file:`README.txt` for usage instructions.
