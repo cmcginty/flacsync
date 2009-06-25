@@ -51,7 +51,7 @@ setup(
       'http://%s.googlecode.com/files/%s-%s.tar.gz' %
          (name,name,pkg.__version__,)),
    packages=[name],
-   scripts=['scripts/%s', (name,)],
+   scripts=['scripts/%s'%(name,)],
    classifiers=[
       'Development Status :: 5 - Production/Stable',
       'Environment :: Console',
