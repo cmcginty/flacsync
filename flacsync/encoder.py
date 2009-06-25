@@ -54,8 +54,8 @@ class Encoder(object):
       if replay_gain is None:
          return None
       rg_f = float(replay_gain.split()[0])
-      sc = 1000 * pow(10,(-0.1*rg_f))
-      return "%08X" % (sc,)
+      sc = 1000 * pow(10,(-rg_f/10.0))
+      return ' '.join(["%08X" % (sc,)]*10)
 
    def _cover_thumbnail(self):
       if not self.cover: return None
@@ -99,7 +99,7 @@ class AacEncoder( Encoder ):
             }
       # tag AAC file
       sc_val = self._rg_to_soundcheck(replay_gain)
-      cmd = ['-meta-user:ITUNNORM="%s"' % (sc_val,)]
+      cmd = ['-meta-user:iTunNORM="%s"' % (sc_val,)]
       cmd.extend('-meta:%s="%s"'%(x,y) for x,y in aac_fields.items())
       err = sp.call( 'neroAacTag "%s" %s' % (self.dst,' '.join(cmd)),
             shell=True, stderr=NULL)
