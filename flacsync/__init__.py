@@ -1,7 +1,20 @@
 #!/usr/bin/env python
 """
-   Convert FLAC audio to a number of lossy formats (AAC, MP3). The script will
-   atempt to retain all metadata fields in the output files.
+   Recursively mirrors FLAC audio fles to AAC. The source FLAC files sourced
+   can be filtered by sub-directory in order to limit the files converted. The
+   script will also attempt to retain all meta-data fields in the output files.
+
+   At A Glance
+   ===========
+
+   * Mirror directory tree of FLAC files to AAC (using NeroAacEnc).
+   * Filter source file selection using one or more sub-directory paths.
+   * By default, will only re-encode missing or out-of-date AAC files.
+   * Optionally deletes orphaned output files.
+   * Multi-threaded encoding ensures full CPU utilization.
+   * Supports transfer of FLAC meta-data including *title*, *artist*, *album*.
+   * Converts FLAC replaygain field to Apple iTunes Sound Check.
+   * Resizes and embeds album cover art JPEG files to destination files.
 """
 
 import sys

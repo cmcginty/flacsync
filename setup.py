@@ -19,16 +19,11 @@
 Distools setup file for the flacsync application.
 """
 
-__date__    = '$Date$'
-__version__ = '$Revision$'
-
-
 import sys
-sys.path.insert(0,'flacsync')
-
 import os
 from distutils.core import setup
 
+sys.path.insert(0,'flacsync')
 import flacsync as pkg
 name = pkg.__name__
 
@@ -41,7 +36,7 @@ setup(
    name=name,
    version=pkg.__version__,
    description="""\
-      Batch convert a directory of FLAC files to AAC.
+      Recursively mirror a directory of FLAC files to AAC.
       """,
    long_description=long_doc,
    author=pkg.__author__,
