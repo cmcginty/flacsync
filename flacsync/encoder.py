@@ -30,7 +30,7 @@ __email__ = 'flacsync@tuxcoder.com'
 
 NULL = file('/dev/null')
 # list of album covers, in preferential order
-COVERS = ['cover.jpg', 'folder.jpg', 'frong.jpg', 'album.jpg']
+COVERS = ['cover.jpg', 'folder.jpg', 'front.jpg', 'album.jpg']
 THUMBSIZE = 250,250
 
 
