@@ -29,8 +29,6 @@ Info:
 """
 
 # import the mktoc python package and run
-import sys
 import flacsync
-
-sys.exit(flacsync.main())
+flacsync.main()
 
