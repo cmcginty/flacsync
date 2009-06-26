@@ -14,28 +14,38 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-   Recursively mirror a directory of FLAC audio files to AAC. Source files can
-   be filtered (by sub-directory, or fully path) in order to limit the files
-   converted. The script will also attempt to retain all meta-data fields in
-   the output files.
+Recursively mirror a directory tree of FLAC audio files to AAC. Source files
+can be filtered (by sub-directory, or full path) in order to limit the files
+converted. The script will also attempt to retain all meta-data fields in the
+output files.
 
-   At a Glance
-   ===========
+At a Glance
+===========
 
-   * Mirror directory tree of FLAC files to AAC (using NeroAacEnc).
-   * Filter source file selection using one or more sub-directory paths.
-   * By default, will only re-encode missing or out-of-date AAC files.
-   * Optionally deletes orphaned output files.
-   * Multi-threaded encoding ensures full CPU utilization.
-   * Supports transfer of FLAC meta-data including *title*, *artist*, *album*.
-   * Converts FLAC replaygain field to Apple iTunes Sound Check.
-   * Resizes and embeds album cover art JPEG files to destination files.
+* Mirror directory tree of FLAC files audio files to AAC (re-encoded using NeroAacEnc?).
+* Filter source tree using one or more sub-directory paths.
+* By default, will only re-encode missing or out-of-date AAC files.
+* Optionally deletes orphaned output files.
+* Multi-threaded encoding ensures full CPU utilization.
+* Supports transfer of FLAC meta-data including *title*, *artist*, *album*.
+* Converts FLAC replaygain field to Apple iTunes Sound Check.
+* Resizes and embeds album cover art JPEG files to destination files.
+
+Usage Model
+===========
+
+* Hard disk space is cheap, but flash-based media players are still limited in
+  capacity.
+* Create an AAC encoded "mirror" of your music files for portability.
+* Setup a daily cron job to always keep your FLAC and AAC files syncronized.
+* Re-encode your FLAC library to different AAC bit-rates in one command.
 """
 
 import sys
 import os
 import optparse as op
 import multiprocessing
+import textwrap
 
 from . import decoder
 from . import encoder
@@ -167,9 +177,8 @@ def get_opts( argv ):
 
    BASE_DIR    Define the 'root' of the source FLAC directory hierarchy. All
                output files will be generated in directory parallel to the
-               BASE_DIR.  The generated file paths in destination directory
-               will be created to duplicate the source path, starting from
-               BASE_DIR.
+               BASE_DIR.  The generated file paths in the destination directory
+               will be mirror each source path, starting from BASE_DIR.
 
    SOURCE ...  Optional dir/file argument list to select source files for
                transcoding. If not defined, all files in BASE_DIR will be
@@ -179,21 +188,31 @@ def get_opts( argv ):
    parser = op.OptionParser(usage=usage, version="%prog "+__version__)
    parser.add_option( '-c', '--threads', dest='thread_count',
          default=multiprocessing.cpu_count(),
-         help="define max number of encoding threads (default %default)" )
-   parser.add_option( '-f', '--force', dest='force',
-         default=False, action="store_true",
-         help="set to force re-encode of files that exists in the output dir" )
+         help="set max number of encoding threads (default %default)" )
+
+   helpstr = """
+      force re-encode of all files from the source dir; by default source files
+      will be skipped if it is determined that an up-to-date copy exists in the
+      destination path"""
+   parser.add_option( '-f', '--force', dest='force', default=False,
+         action="store_true", help=_help_str(helpstr) )
+
    parser.add_option( '-t', '--type', dest='enc_type', default="aac",
-         help="set the output transcode format [%default (default)]")
+         help="select the output transcode format [%default (default)]")
+
+   helpstr = """
+      prevent the removal of files and directories in the dest dir that have no
+      corresponding source file"""
    parser.add_option( '-o', '--ignore-orphans', dest='del_orphans',
-         default=True, action="store_false",
-         help="set to prevent the removal of files and directories in the "
-              "dest dir that have no corresponding source file" )
+         default=True, action="store_false", help=_help_str(helpstr) )
+
    # ACC only options
    aac_group = op.OptionGroup( parser, "AAC Encoder Options" )
+   helpstr = """
+      set the AAC encoder quality value, must be a float range of 0..1
+      [%default (default)]"""
    aac_group.add_option( '-q', '--quality', dest='aac_q', default='0.35',
-         help="set the AAC encoder quality value, must be a float range "
-              "of 0..1 [%default (default)]")
+         help=_help_str(helpstr) )
    parser.add_option_group( aac_group )
 
    # examine input args
@@ -215,6 +234,10 @@ def get_opts( argv ):
    # set default destination directory
    opts.dest_dir = os.path.join( os.path.dirname(opts.base_dir), opts.enc_type)
    return opts
+
+
+def _help_str( text ):
+   return textwrap.dedent(text).strip()
 
 
 def main( argv=None ):
