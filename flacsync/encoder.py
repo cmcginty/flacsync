@@ -53,14 +53,17 @@ class _Encoder(object):
             os.path.getmtime(self.src) > os.path.getmtime(self.dst))
 
    def _is_cover_newer( self ):
-      return (os.path.getmtime(self.cover) > os.path.getmtime(self.dst))
+      if self.cover:
+         return (os.path.getmtime(self.cover) > os.path.getmtime(self.dst))
+      else:
+         return False
 
    def _get_cover( self ):
       root,files = os.walk( os.path.dirname(self.src)).next()[::2]
-      match = (f for f in files for c in COVERS if f==c).next()
-      if match: # cover image found
+      try:
+         match = (f for f in files for c in COVERS if f==c).next()
          return os.path.join(root,match)
-      else:
+      except StopIteration:
          return None
 
    def _pre_encode( self ):
