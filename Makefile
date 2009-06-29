@@ -9,6 +9,7 @@ help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  help           to print his output message"
 	@echo "  test           to run all unit-tests"
+	@echo "  cover          to run unit-tests w/ code coverage stats"
 	@echo "  install        to install teh applicataion"
 	@echo "  clean          to remove tmp files"
 	@echo "  doc            to genearte Sphinx html documents"
@@ -19,6 +20,11 @@ help:
 
 .PHONY: test
 test:
+	nosetests -w flacsync
+
+.PHONY: cover
+cover:
+	nosetests -w flacsync --with-coverage --cover-package=flacsync --cover-erase --cover-inclusive
 
 .PHONY: install
 install:
