@@ -128,8 +128,8 @@ class AacEncoder( _Encoder ):
             shell=True, stderr=NULL)
       return self._check_err( err, "AAC tag failed:" )
 
-   def set_cover( self ):
-      if not self._is_cover_newer():
+   def set_cover( self, force ):
+      if not force and not self._is_cover_newer():
          return
       tmp_cover = self._cover_thumbnail()
       err = sp.call( 'neroAacTag "%s" -remove-cover:all -add-cover:front:"%s"' %

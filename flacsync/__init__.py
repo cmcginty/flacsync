@@ -83,10 +83,11 @@ def process_flac( opts, f, total, count, dirs ):
       print_status( f, count.value, total, dirs)
       e = opts.EncClass( src=f, q=opts.aac_q, base_dir=opts.base_dir,
             dest_dir=opts.dest_dir ) # instantiate the encoder
-      encoded = e.encode( opts.force )
-      if encoded:
+      was_encoded = e.encode( opts.force )
+      if was_encoded:
          e.tag( **decoder.FlacDecoder(f).tags )
-      e.set_cover()
+      # 'was_encoded' will force update of cover since cover is no-longer newer
+      e.set_cover( was_encoded )
    except KeyboardInterrupt: pass
    except:
       import traceback
