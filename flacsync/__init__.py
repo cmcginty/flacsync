@@ -86,7 +86,7 @@ def process_flac( opts, f, total, count, dirs ):
       encoded = e.encode( opts.force )
       if encoded:
          e.tag( **decoder.FlacDecoder(f).tags )
-      e.set_cover( encoded )
+      e.set_cover()
    except KeyboardInterrupt: pass
    except:
       import traceback
@@ -244,10 +244,11 @@ def main( argv=None ):
    opts = get_opts( argv )
    # use base dir and input filter to locate all input files
    flacs = get_src_files( opts.base_dir, opts.sources )
-   # filter out files that do not need to be encoded
-   flacs = (f for f in flacs if not
-            opts.EncClass( src=f, base_dir=opts.base_dir,
-               dest_dir=opts.dest_dir).skip_encode() )
+   # filter out files thaat do not need to be encoded
+   if not opts.force:
+      flacs = (f for f in flacs if not
+               opts.EncClass( src=f, base_dir=opts.base_dir,
+                  dest_dir=opts.dest_dir).skip_encode() )
 
    # remove orphans, if defined
    if opts.del_orphans:
