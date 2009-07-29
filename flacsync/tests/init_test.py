@@ -50,7 +50,6 @@ class TestMainCmdArgs():
       mock_get_src_files.return_value = iter(['file1.flac'])
       flacsync.main(argv=['','-f','/flac']) # <-- test function
       # assert encoder object creation to for 'skip_encode' method
-      assert not self.mock_aac_enc.called
       self.mock_aac_enc.return_value.skip_encode.assert_called()
       # file was skiped, so verify it was not called
       assert mock_pool.return_value.apply_async.called

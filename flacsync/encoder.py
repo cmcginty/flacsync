@@ -40,23 +40,14 @@ class _Encoder(object):
    def __init__( self, src, ext, base_dir, dest_dir, **kwargs ):
       super( _Encoder, self).__init__()
       self.src = src
-      self.dst = util.fname(src,base_dir,dest_dir,ext)
+      self.dst = util.fname(src, base_dir, dest_dir, ext)
       self.cover = self._get_cover() or None
 
    def skip_encode( self ):
       "Return 'True' if entire enocde step can be skipped"
-      if not self._is_newer() and not self._is_cover_newer():
-         return True
-
-   def _is_newer( self ):
-      return (not os.path.exists(self.dst) or
-            os.path.getmtime(self.src) > os.path.getmtime(self.dst))
-
-   def _is_cover_newer( self ):
-      if self.cover:
-         return (os.path.getmtime(self.cover) > os.path.getmtime(self.dst))
-      else:
-         return False
+      encode = util.newer(self.src, self.dst)
+      cover  = self.cover and util.newer(self.cover, self.dst)
+      return not (encode or cover)
 
    def _get_cover( self ):
       root,_,files = os.walk( os.path.dirname(self.src)).next()
@@ -76,20 +67,20 @@ class _Encoder(object):
       value."""
       if replay_gain is None:
          return None
-      rg_f = float(replay_gain.split()[0])
+      rg_f = float( replay_gain.split()[0])
       sc = 1000 * pow(10,(-rg_f/10.0))
       return ' '.join(["%08X" % (sc,)]*10)
 
-   def _cover_thumbnail(self):
+   def _cover_thumbnail( self ):
       assert self.cover    # cover must be valid
-      im = Image.open(self.cover)
-      im.thumbnail(THUMBSIZE)
+      im = Image.open( self.cover)
+      im.thumbnail( THUMBSIZE)
       ofile = tempfile.mkstemp()[1]
-      im.save(ofile, "JPEG")
+      im.save( ofile, "JPEG")
       return ofile
 
    @staticmethod
-   def _check_err( err, msg):
+   def _check_err( err, msg ):
       if err:
          print msg,
          print err
@@ -105,13 +96,14 @@ class AacEncoder( _Encoder ):
       self.q = q
 
    def encode( self, force=False ):
-      if not force and not self._is_newer():
+      if force or util.newer( self.src, self.dst):
+         self._pre_encode()
+         # encode to AAC
+         err = sp.call( 'flac -d "%s" -c -s | neroAacEnc -q %s -if - -of "%s"' %
+               (self.src, self.q, self.dst), shell=True, stderr=NULL)
+         return self._check_err( err, "AAC encoder failed:" )
+      else:
          return False
-      self._pre_encode()
-      # encode to AAC
-      err = sp.call( 'flac -d "%s" -c -s | neroAacEnc -q %s -if - -of "%s"' %
-            (self.src, self.q, self.dst), shell=True, stderr=NULL)
-      return self._check_err( err, "AAC encoder failed:" )
 
    def tag( self, artist=None, title=None, album=None, year=None, track=None,
                genre=None, replay_gain=None ):
@@ -129,7 +121,7 @@ class AacEncoder( _Encoder ):
       return self._check_err( err, "AAC tag failed:" )
 
    def set_cover( self, force ):
-      if self.cover and (force or self._is_cover_newer()):
+      if self.cover and (force or util.newer(self.cover,self.dst)):
          tmp_cover = self._cover_thumbnail()
          err = sp.call( 'neroAacTag "%s" -remove-cover:all -add-cover:front:"%s"' %
                   (self.dst, tmp_cover,), shell=True, stderr=NULL)

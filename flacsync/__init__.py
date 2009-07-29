@@ -74,20 +74,18 @@ def print_status( file_, count, total, dirs ):
    sys.stdout.flush()
 
 
-def process_flac( opts, f, total, count, dirs ):
+def process_flac( opts, e, total, count, dirs ):
    """Perform all process steps to convert every FLAC file to the defined
    output format."""
    try:
       # increment counter
       count.value += 1
-      print_status( f, count.value, total, dirs)
-      e = opts.EncClass( src=f, q=opts.aac_q, base_dir=opts.base_dir,
-            dest_dir=opts.dest_dir ) # instantiate the encoder
-      was_encoded = e.encode( opts.force )
-      if was_encoded:
-         e.tag( **decoder.FlacDecoder(f).tags )
-      # 'was_encoded' will force update of cover since cover is no-longer newer
-      e.set_cover( was_encoded )
+      print_status( e.src, count.value, total, dirs)
+      if e.encode( opts.force ):
+         e.tag( **decoder.FlacDecoder(e.src).tags )
+         e.set_cover(True)  # force new cover
+      else: # update cover if newer
+         e.set_cover()
    except KeyboardInterrupt: pass
    except:
       import traceback
@@ -245,11 +243,14 @@ def main( argv=None ):
    opts = get_opts( argv )
    # use base dir and input filter to locate all input files
    flacs = get_src_files( opts.base_dir, opts.sources )
-   # filter out files thaat do not need to be encoded
+
+   # convert files to encoder objects
+   encoders = (opts.EncClass( src=f, base_dir=opts.base_dir,
+                  dest_dir=opts.dest_dir) for f in flacs)
+   # filter out encoders that are unnecessary
    if not opts.force:
-      flacs = (f for f in flacs if not
-               opts.EncClass( src=f, base_dir=opts.base_dir,
-                  dest_dir=opts.dest_dir).skip_encode() )
+      encoders = (e for e in encoders if not e.skip_encode())
+   encoders = list(encoders)
 
    # remove orphans, if defined
    if opts.del_orphans:
@@ -257,14 +258,12 @@ def main( argv=None ):
 
    # create mp Pool
    p = multiprocessing.Pool( opts.thread_count )
-   flacs = list(flacs)
-   total = len(flacs)
    m = multiprocessing.Manager()
    count = m.Value('i', 0) # shared file counter
    dirs  = m.dict() # shared dir map
    try:
-      for f in flacs:
-         p.apply_async( process_flac, args=(opts, f, total, count, dirs))
+      for e in encoders:
+         p.apply_async( process_flac, args=(opts, e, len(encoders), count, dirs))
 
       p.close()
       p.join()
