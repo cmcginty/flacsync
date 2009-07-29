@@ -41,7 +41,7 @@ class _Encoder(object):
       super( _Encoder, self).__init__()
       self.src = src
       self.dst = util.fname(src,base_dir,dest_dir,ext)
-      self.cover = self._get_cover()
+      self.cover = self._get_cover() or None
 
    def skip_encode( self ):
       "Return 'True' if entire enocde step can be skipped"
@@ -59,12 +59,12 @@ class _Encoder(object):
          return False
 
    def _get_cover( self ):
-      root,files = os.walk( os.path.dirname(self.src)).next()[::2]
+      root,_,files = os.walk( os.path.dirname(self.src)).next()
       try:
          match = (f for f in files for c in COVERS if f==c).next()
          return os.path.join(root,match)
       except StopIteration:
-         return None
+         pass
 
    def _pre_encode( self ):
       try:
@@ -81,7 +81,7 @@ class _Encoder(object):
       return ' '.join(["%08X" % (sc,)]*10)
 
    def _cover_thumbnail(self):
-      if not self.cover: return None
+      assert self.cover    # cover must be valid
       im = Image.open(self.cover)
       im.thumbnail(THUMBSIZE)
       ofile = tempfile.mkstemp()[1]
@@ -129,13 +129,11 @@ class AacEncoder( _Encoder ):
       return self._check_err( err, "AAC tag failed:" )
 
    def set_cover( self, force ):
-      if not force and not self._is_cover_newer():
-         return
-      tmp_cover = self._cover_thumbnail()
-      err = sp.call( 'neroAacTag "%s" -remove-cover:all -add-cover:front:"%s"' %
-               (self.dst, tmp_cover,), shell=True, stderr=NULL)
-      # delete temp file
-      os.remove( tmp_cover )
-      return self._check_err( err, "AAC add-cover failed:" )
-
+      if self.cover and (force or self._is_cover_newer()):
+         tmp_cover = self._cover_thumbnail()
+         err = sp.call( 'neroAacTag "%s" -remove-cover:all -add-cover:front:"%s"' %
+                  (self.dst, tmp_cover,), shell=True, stderr=NULL)
+         # delete temp file
+         os.remove( tmp_cover )
+         return self._check_err( err, "AAC add-cover failed:" )
 
