@@ -44,8 +44,9 @@ Usage Model
 import sys
 import os
 import optparse as op
-import multiprocessing
 import textwrap
+import threading
+import Queue
 
 from . import decoder
 from . import encoder
@@ -58,6 +59,18 @@ __email__ = 'flacsync@tuxcoder.com'
 # define a mapping of enocoder-types to implementation class name.
 ENCODERS = {'aac':encoder.AacEncoder }
 
+try:
+   import multiprocessing
+   CORES = multiprocessing.cpu_count()
+except:
+   CORES = 4   # a nice default
+
+# shared thread data
+class Data: pass
+thrd_data = Data()
+thrd_data.exit = threading.Event()  # thread exit event
+thrd_data.count= 0                  # encoder file count
+thrd_data.dirs = {}                 # printed dirs
 
 #############################################################################
 def print_status( file_, count, total, dirs ):
@@ -74,22 +87,22 @@ def print_status( file_, count, total, dirs ):
    sys.stdout.flush()
 
 
-def process_flac( opts, e, total, count, dirs ):
+def process_flac( opts, queue, total):
    """Perform all process steps to convert every FLAC file to the defined
    output format."""
-   try:
-      # increment counter
-      count.value += 1
-      print_status( e.src, count.value, total, dirs)
-      if e.encode( opts.force ):
-         e.tag( **decoder.FlacDecoder(e.src).tags )
-         e.set_cover(True)  # force new cover
-      else: # update cover if newer
-         e.set_cover()
-   except KeyboardInterrupt: pass
-   except:
-      import traceback
-      traceback.print_exc()
+   while not thrd_data.exit.is_set():
+      try:
+         e = queue.get(timeout=0.2)
+         thrd_data.count += 1
+         print_status( e.src, thrd_data.count, total, thrd_data.dirs)
+         if e.encode( opts.force ):
+            e.tag( **decoder.FlacDecoder(e.src).tags )
+            e.set_cover(True)  # force new cover
+         else: # update cover if newer
+            e.set_cover()
+         queue.task_done()
+      except Queue.Empty:
+         pass
 
 
 def get_dest_orphans( dest_dir, base_dir, sources ):
@@ -185,8 +198,7 @@ def get_opts( argv ):
                BASE_DIR or the current working directory.
    """
    parser = op.OptionParser(usage=usage, version="%prog "+__version__)
-   parser.add_option( '-c', '--threads', dest='thread_count',
-         default=multiprocessing.cpu_count(),
+   parser.add_option( '-c', '--threads', dest='thread_count', default=CORES,
          help="set max number of encoding threads (default %default)" )
 
    helpstr = """
@@ -256,20 +268,22 @@ def main( argv=None ):
    if opts.del_orphans:
       del_dest_orphans( opts.dest_dir, opts.base_dir, opts.sources)
 
-   # create mp Pool
-   p = multiprocessing.Pool( opts.thread_count )
-   m = multiprocessing.Manager()
-   count = m.Value('i', 0) # shared file counter
-   dirs  = m.dict() # shared dir map
-   try:
-      for e in encoders:
-         p.apply_async( process_flac, args=(opts, e, len(encoders), count, dirs))
+   # exit if no work
+   if not encoders: return
 
-      p.close()
-      p.join()
-   except KeyboardInterrupt:
-      print 'caught Control-C'
-      sys.exit()
+   # create threading pools
+   work_queue = Queue.Queue()
+   for i in xrange(opts.thread_count):
+      threading.Thread( target=process_flac,
+            args=(opts, work_queue, len(encoders))).start()
+
+   # add work to queue
+   for e in encoders:
+      work_queue.put( e )
+
+   # wait for queue to empty
+   work_queue.join()
+   thrd_data.exit.set()
 
 
 if __name__ == '__main__':
