@@ -82,8 +82,7 @@ class _Encoder(object):
    @staticmethod
    def _check_err( err, msg ):
       if err:
-         print msg,
-         print err
+         print msg, err
          return False
       else:
          return True
@@ -101,6 +100,9 @@ class AacEncoder( _Encoder ):
          # encode to AAC
          err = sp.call( 'flac -d "%s" -c -s | neroAacEnc -q %s -if - -of "%s"' %
                (self.src, self.q, self.dst), shell=True, stderr=NULL)
+         if err == -2:  # keyboard interrupt
+            os.remove(self.dst) # clean-up partial file
+            raise KeyboardInterrupt
          return self._check_err( err, "AAC encoder failed:" )
       else:
          return False

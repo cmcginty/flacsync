@@ -90,17 +90,24 @@ def print_status( file_, count, total, dirs ):
 def process_flac( opts, queue, total):
    """Perform all process steps to convert every FLAC file to the defined
    output format."""
+   key_int = False   # True if KeyboardInterrupt exception
    while not thrd_data.exit.is_set():
       try:
          e = queue.get(timeout=0.2)
-         thrd_data.count += 1
-         print_status( e.src, thrd_data.count, total, thrd_data.dirs)
-         if e.encode( opts.force ):
-            e.tag( **decoder.FlacDecoder(e.src).tags )
-            e.set_cover(True)  # force new cover
-         else: # update cover if newer
-            e.set_cover()
-         queue.task_done()
+         try:
+            if not key_int:
+               thrd_data.count += 1
+               print_status( e.src, thrd_data.count, total, thrd_data.dirs)
+               if e.encode( opts.force ):
+                  e.tag( **decoder.FlacDecoder(e.src).tags )
+                  e.set_cover(True)  # force new cover
+               else: # update cover if newer
+                  e.set_cover()
+         except KeyboardInterrupt:
+            # disable work and clear out remaining queue items
+            key_int = True
+         finally:
+            queue.task_done()
       except Queue.Empty:
          pass
 
@@ -281,8 +288,10 @@ def main( argv=None ):
    for e in encoders:
       work_queue.put( e )
 
-   # wait for queue to empty
-   work_queue.join()
+   try:
+      # wait for queue to empty
+      work_queue.join()
+   except KeyboardInterrupt: pass
    thrd_data.exit.set()
 
 
