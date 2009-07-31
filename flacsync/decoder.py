@@ -46,5 +46,5 @@ class FlacDecoder( object ):
    def _read_tag(self,field):
       val = sp.Popen( 'metaflac --show-tag=%s "%s"' % (field,self.name),
             shell=True, stdout=sp.PIPE).communicate()[0]
-      return val.split('=')[1].strip()
+      return val.split('=')[1].strip() if val else None
 
