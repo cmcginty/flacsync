@@ -66,11 +66,10 @@ except:
    CORES = 4   # a nice default
 
 # shared thread data
-class Data: pass
-thrd_data = Data()
-thrd_data.exit = threading.Event()  # thread exit event
-thrd_data.count= 0                  # encoder file count
-thrd_data.dirs = {}                 # printed dirs
+class Struct: pass
+
+worker_state = Struct()
+worker_state.exit = threading.Event()  # thread exit event
 
 #############################################################################
 def print_status( file_, count, total, dirs ):
@@ -87,25 +86,30 @@ def print_status( file_, count, total, dirs ):
    sys.stdout.flush()
 
 
-def process_flac( opts, queue, total):
+def process_flac( opts, encoder, shared ):
    """Perform all process steps to convert every FLAC file to the defined
    output format."""
-   key_int = False   # True if KeyboardInterrupt exception
-   while not thrd_data.exit.is_set():
+   shared.item += 1
+   file_ = encoder.src
+   print_status( file_, shared.item, shared.max_items, shared.dirs)
+   if encoder.encode( opts.force ):
+      encoder.tag( **decoder.FlacDecoder(file_).tags )
+      encoder.set_cover(True)  # force new cover
+   else: # update cover if newer
+      encoder.set_cover()
+
+def worker( queue ):
+   """Generic worker thread."""
+   is_key_int = False   # True if KeyboardInterrupt exception
+   while not worker_state.exit.is_set():
       try:
-         e = queue.get(timeout=0.2)
+         func,args,kwargs = queue.get(timeout=0.2)
          try:
-            if not key_int:
-               thrd_data.count += 1
-               print_status( e.src, thrd_data.count, total, thrd_data.dirs)
-               if e.encode( opts.force ):
-                  e.tag( **decoder.FlacDecoder(e.src).tags )
-                  e.set_cover(True)  # force new cover
-               else: # update cover if newer
-                  e.set_cover()
+            if not is_key_int:
+               func( *args, **kwargs )
          except KeyboardInterrupt:
             # disable work and clear out remaining queue items
-            key_int = True
+            is_key_int = True
          finally:
             queue.task_done()
       except Queue.Empty:
@@ -281,18 +285,23 @@ def main( argv=None ):
    # create threading pools
    work_queue = Queue.Queue()
    for i in xrange(opts.thread_count):
-      threading.Thread( target=process_flac,
-            args=(opts, work_queue, len(encoders))).start()
+      threading.Thread( target=worker, args=(work_queue,)).start()
+
+   # create shared thread data
+   shared = Struct()
+   shared.max_items  = len(encoders) # total work items
+   shared.item       = 0   # processed work item counter
+   shared.dirs       = {}  # printed dirs
 
    # add work to queue
    for e in encoders:
-      work_queue.put( e )
+      work_queue.put( (process_flac, (opts, e, shared), {}) )
 
    try:
       # wait for queue to empty
       work_queue.join()
    except KeyboardInterrupt: pass
-   thrd_data.exit.set()
+   worker_state.exit.set()
 
 
 if __name__ == '__main__':
