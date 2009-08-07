@@ -298,15 +298,7 @@ def main( argv=None ):
       work_queue.put( (process_flac, (opts, e, shared), {}) )
 
    try:
-      # wait for queue to empty
-      work_queue.join()
-   except KeyboardInterrupt: pass
-   worker_state.exit.set()
-
-
-if __name__ == '__main__':
-   try:
-      sys.exit( main(sys.argv[1:]) )
-   except KeyboardInterrupt:
-      sys.exit(-1)
+      queue.join()
+   finally:
+      worker.pool_stop()
 

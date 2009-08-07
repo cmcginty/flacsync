@@ -29,5 +29,8 @@ Info:
 
 # import the mktoc python package and run
 import flacsync
-flacsync.main()
+try:
+   flacsync.main()
+except KeyboardInterrupt:
+   pass
 
