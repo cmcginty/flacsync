@@ -45,12 +45,11 @@ import sys
 import os
 import optparse as op
 import textwrap
-import threading
-import Queue
 
 from . import decoder
 from . import encoder
 from . import util
+from . import worker
 
 __version__ = '0.1'
 __author__ = 'Patrick C. McGinty'
@@ -65,55 +64,41 @@ try:
 except:
    CORES = 4   # a nice default
 
-# shared thread data
-class Struct: pass
-
-worker_state = Struct()
-worker_state.exit = threading.Event()  # thread exit event
 
 #############################################################################
-def print_status( file_, count, total, dirs ):
-   """Output progress of encoding to terminal."""
-   dir_ = os.path.dirname(file_)
-   if not dir_ in dirs:
-      # print current directory
-      print '-'*30
-      print '%s/...' % (dir_[:74],)
-      dirs[dir_] = True
-   # print input file
-   pos = '[%d of %d]' % (count,total)
-   print '%15s %-60s' % (pos, os.path.basename(file_)[:60],)
-   sys.stdout.flush()
+class WorkUnit( object ):
+   def __init__( self, opts, max_work ):
+      self._opts = opts
+      self._max_work = max_work
+      self._count = 0
+      self._dirs = {}
 
+   def _log( self, file_ ):
+      """Output progress of encoding to terminal."""
+      lines = []
+      dir_ = os.path.dirname(file_)
+      if not dir_ in self._dirs:
+         # print current directory
+         lines.append( '-'*30 )
+         lines.append( '%s/...' % (dir_[:74],))
+         self._dirs[dir_] = True
+      # print input file
+      pos = '[%d of %d]' % (self._count,self._max_work)
+      lines.append( '%15s %-60s' % (pos, os.path.basename(file_)[:60],) )
+      return '\n'.join(lines)
 
-def process_flac( opts, encoder, shared ):
-   """Perform all process steps to convert every FLAC file to the defined
-   output format."""
-   shared.item += 1
-   file_ = encoder.src
-   print_status( file_, shared.item, shared.max_items, shared.dirs)
-   if encoder.encode( opts.force ):
-      encoder.tag( **decoder.FlacDecoder(file_).tags )
-      encoder.set_cover(True)  # force new cover
-   else: # update cover if newer
-      encoder.set_cover()
-
-def worker( queue ):
-   """Generic worker thread."""
-   is_key_int = False   # True if KeyboardInterrupt exception
-   while not worker_state.exit.is_set():
-      try:
-         func,args,kwargs = queue.get(timeout=0.2)
-         try:
-            if not is_key_int:
-               func( *args, **kwargs )
-         except KeyboardInterrupt:
-            # disable work and clear out remaining queue items
-            is_key_int = True
-         finally:
-            queue.task_done()
-      except Queue.Empty:
-         pass
+   def do_work( self, encoder ):
+      """Perform all process steps to convert every FLAC file to the defined
+      output format."""
+      file_ = encoder.src
+      self._count += 1
+      print self._log( file_ )
+      sys.stdout.flush()
+      if encoder.encode( self._opts.force ):
+         encoder.tag( **decoder.FlacDecoder(file_).tags )
+         encoder.set_cover(True)  # force new cover
+      else: # update cover if newer
+         encoder.set_cover()
 
 
 def get_dest_orphans( dest_dir, base_dir, sources ):
@@ -282,21 +267,11 @@ def main( argv=None ):
    # exit if no work
    if not encoders: return
 
-   # create threading pools
-   work_queue = Queue.Queue()
-   for i in xrange(opts.thread_count):
-      threading.Thread( target=worker, args=(work_queue,)).start()
-
-   # create shared thread data
-   shared = Struct()
-   shared.max_items  = len(encoders) # total work items
-   shared.item       = 0   # processed work item counter
-   shared.dirs       = {}  # printed dirs
-
-   # add work to queue
+   # create work pool, and add jobs
+   queue = worker.pool( opts.thread_count )
+   work_obj = WorkUnit( opts, len(encoders) )
    for e in encoders:
-      work_queue.put( (process_flac, (opts, e, shared), {}) )
-
+      queue.apply( work_obj.do_work, e )
    try:
       queue.join()
    finally:
