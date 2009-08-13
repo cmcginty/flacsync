@@ -173,11 +173,17 @@ def normalize_sources( base_dir, sources ):
    """Convert all source paths to absolute path, and remove non-existent
    paths."""
    # try to extend sources list using 'base_dir' as root
-   sources.extend( [os.path.join(base_dir,f) for f in sources] )
-   # apply abspath to all items, remove invalid paths
-   sources = filter( os.path.exists, map(os.path.abspath,sources) )
-   sources = list(set(sources)) # remove duplicates
-   return sources
+   alt_sources = [os.path.join(base_dir,f) for f in sources]
+   sources = zip( sources, alt_sources )
+   # apply 'os.path.exists' to tuples of dirs
+   is_valid_path = [ map(os.path.exists,x) for x in sources ]
+   # find any False 'is_valid' tuples
+   invalid = [x for x in zip(sources,is_valid_path) if not any(x[1])]
+   if invalid:
+      raise ValueError( "', or '".join(invalid[0][0]))
+   # apply abspath to all items, remove duplicates
+   sources = [inner for outer in sources for inner in outer]
+   return list(set(map(os.path.abspath,sources)))
 
 
 def get_opts( argv ):
@@ -236,7 +242,11 @@ def get_opts( argv ):
 
    # handle positional arguments
    opts.base_dir = os.path.abspath(args[0])
-   opts.sources = normalize_sources( opts.base_dir, args[1:] )
+   try:
+      opts.sources = normalize_sources( opts.base_dir, args[1:] )
+   except ValueError as exc:
+      print( "ERROR: '%s' is not a valid path !!" % (exc,) )
+      sys.exit(-1)
 
    # set default destination directory
    opts.dest_dir = os.path.join( os.path.dirname(opts.base_dir), opts.enc_type)
