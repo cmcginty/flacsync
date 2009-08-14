@@ -41,15 +41,15 @@ Usage Model
 * Re-encode your FLAC library to different AAC bit-rates in one command.
 """
 
-import sys
-import os
+import multiprocessing.dummy as mp
 import optparse as op
+import os
+import sys
 import textwrap
 
 from . import decoder
 from . import encoder
 from . import util
-from . import worker
 
 __version__ = '0.1'
 __author__ = 'Patrick C. McGinty'
@@ -57,17 +57,13 @@ __email__ = 'flacsync@tuxcoder.com'
 
 # define a mapping of enocoder-types to implementation class name.
 ENCODERS = {'aac':encoder.AacEncoder }
-
-try:
-   import multiprocessing
-   CORES = multiprocessing.cpu_count()
-except:
-   CORES = 4   # a nice default
+CORES = mp.cpu_count()
 
 
 #############################################################################
 class WorkUnit( object ):
    def __init__( self, opts, max_work ):
+      self.abort = False
       self._opts = opts
       self._max_work = max_work
       self._count = 0
@@ -90,15 +86,19 @@ class WorkUnit( object ):
    def do_work( self, encoder ):
       """Perform all process steps to convert every FLAC file to the defined
       output format."""
-      file_ = encoder.src
-      self._count += 1
-      print self._log( file_ )
-      sys.stdout.flush()
-      if encoder.encode( self._opts.force ):
-         encoder.tag( **decoder.FlacDecoder(file_).tags )
-         encoder.set_cover(True)  # force new cover
-      else: # update cover if newer
-         encoder.set_cover()
+      if self.abort: return
+      try:
+         file_ = encoder.src
+         self._count += 1
+         print self._log( file_ )
+         sys.stdout.flush()
+         if encoder.encode( self._opts.force ):
+            encoder.tag( **decoder.FlacDecoder(file_).tags )
+            encoder.set_cover(True)  # force new cover
+         else: # update cover if newer
+            encoder.set_cover()
+      except KeyboardInterrupt:
+         self.abort = True
 
 
 def get_dest_orphans( dest_dir, base_dir, sources ):
@@ -278,12 +278,13 @@ def main( argv=None ):
    if not encoders: return
 
    # create work pool, and add jobs
-   queue = worker.pool( opts.thread_count )
+   queue = mp.Pool( processes=CORES )
    work_obj = WorkUnit( opts, len(encoders) )
    for e in encoders:
-      queue.apply( work_obj.do_work, e )
+      queue.apply_async( work_obj.do_work, (e,) )
    try:
+      queue.close()
       queue.join()
-   finally:
-      worker.pool_stop()
+   except KeyboardInterrupt:
+      work_obj.abort = True
 
