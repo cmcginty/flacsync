@@ -99,6 +99,9 @@ class WorkUnit( object ):
             encoder.set_cover()
       except KeyboardInterrupt:
          self.abort = True
+      except Exception as exc:
+         print "ERROR: '%s' !!" % (file_,)
+         print exc
 
 
 def get_dest_orphans( dest_dir, base_dir, sources ):
@@ -231,10 +234,10 @@ def get_opts( argv ):
    # examine input args
    (opts, args) = parser.parse_args( argv )
    if not args:
-      print( "ERROR: BASE_DIR not defined !!" )
+      print "ERROR: BASE_DIR not defined !!"
       sys.exit(-1)
    if opts.enc_type not in ENCODERS.keys():
-      print( "ERROR: '%s' is not a valid encoder !!" % (opts.enc_type,) )
+      print "ERROR: '%s' is not a valid encoder !!" % (opts.enc_type,)
       sys.exit(-1)
 
    # set encoder
@@ -245,7 +248,7 @@ def get_opts( argv ):
    try:
       opts.sources = normalize_sources( opts.base_dir, args[1:] )
    except ValueError as exc:
-      print( "ERROR: '%s' is not a valid path !!" % (exc,) )
+      print "ERROR: '%s' is not a valid path !!" % (exc,)
       sys.exit(-1)
 
    # set default destination directory
