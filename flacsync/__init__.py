@@ -266,8 +266,10 @@ def main( argv=None ):
    flacs = get_src_files( opts.base_dir, opts.sources )
 
    # convert files to encoder objects
+   enc_opts = dict((k,v) for k,v in vars(opts).iteritems()
+                  if k.startswith(opts.enc_type))
    encoders = (opts.EncClass( src=f, base_dir=opts.base_dir,
-                  dest_dir=opts.dest_dir) for f in flacs)
+                  dest_dir=opts.dest_dir, **enc_opts) for f in flacs)
    # filter out encoders that are unnecessary
    if not opts.force:
       encoders = (e for e in encoders if not e.skip_encode())

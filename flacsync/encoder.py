@@ -37,7 +37,7 @@ THUMBSIZE = 250,250
 #############################################################################
 class _Encoder(object):
    # dimensions of cover thumbnails in pixels
-   def __init__( self, src, ext, base_dir, dest_dir, **kwargs ):
+   def __init__( self, src, ext, base_dir, dest_dir ):
       super( _Encoder, self).__init__()
       self.src = src
       self.dst = util.fname(src, base_dir, dest_dir, ext)
@@ -90,9 +90,10 @@ class _Encoder(object):
 
 #############################################################################
 class AacEncoder( _Encoder ):
-   def __init__( self, q=None, **kwargs  ):
+   def __init__( self, aac_q, **kwargs  ):
       super( AacEncoder, self).__init__( ext='.m4a', **kwargs)
-      self.q = q
+      assert type(aac_q) == str, "q value is: %s" % (aac_q,)
+      self.q = aac_q
 
    def encode( self, force=False ):
       if force or util.newer( self.src, self.dst):
