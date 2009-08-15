@@ -75,8 +75,8 @@ class _Encoder(object):
       assert self.cover    # cover must be valid
       im = Image.open( self.cover)
       im.thumbnail( THUMBSIZE)
-      ofile = tempfile.mkstemp()[1]
-      im.save( ofile, "JPEG")
+      ofile = tempfile.NamedTemporaryFile()
+      im.save( ofile.name, "JPEG")
       return ofile
 
    @staticmethod
@@ -127,8 +127,6 @@ class AacEncoder( _Encoder ):
       if self.cover and (force or util.newer(self.cover,self.dst)):
          tmp_cover = self._cover_thumbnail()
          err = sp.call( 'neroAacTag "%s" -remove-cover:all -add-cover:front:"%s"' %
-                  (self.dst, tmp_cover,), shell=True, stderr=NULL)
-         # delete temp file
-         os.remove( tmp_cover )
+                  (self.dst, tmp_cover.name,), shell=True, stderr=NULL)
          return self._check_err( err, "AAC add-cover failed:" )
 
