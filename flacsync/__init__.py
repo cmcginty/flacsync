@@ -192,10 +192,11 @@ def normalize_sources( base_dir, sources ):
 def get_opts( argv ):
    usage = """%prog [options] BASE_DIR [SOURCE ...]
 
-   BASE_DIR    Define the 'root' of the source FLAC directory hierarchy. All
-               output files will be generated in directory parallel to the
-               BASE_DIR.  The generated file paths in the destination directory
-               will be mirror each source path, starting from BASE_DIR.
+   BASE_DIR    Define the root path of a directory hierarchy containing desired
+               input files (FLAC).  A mirrored output directory will be created
+               in the deepest path, parallel to BASE_DIR, and named after the
+               selected output file extension. For example, if BASE_DIR is
+               "/data/flac", the output dir will be "/data/aac".
 
    SOURCE ...  Optional dir/file argument list to select source files for
                transcoding. If not defined, all files in BASE_DIR will be
