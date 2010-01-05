@@ -10,7 +10,7 @@ help:
 	@echo "  help           to print his output message"
 	@echo "  test           to run all unit-tests"
 	@echo "  cover          to run unit-tests w/ code coverage stats"
-	@echo "  install        to install teh applicataion"
+	@echo "  install        to install the applicataion"
 	@echo "  clean          to remove tmp files"
 	@echo "  doc            to genearte Sphinx html documents"
 	@echo "  doc-svnprop    to set correct svn prop mime type on docs"
