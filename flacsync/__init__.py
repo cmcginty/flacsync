@@ -257,6 +257,13 @@ def get_opts( argv ):
    parser.add_option( '-o', '--ignore-orphans', dest='del_orphans',
          default=True, action="store_false", help=_help_str(helpstr) )
 
+   helpstr = """
+      define alternate destination output directory to override the default.
+      The standard default destination directory will be created in the same
+      parent directory of BASE_DIR. See BASE_DIR above."""
+   parser.add_option( '-d', '--destination', dest='dest_dir',
+         help=_help_str(helpstr) )
+
    # AAC only options
    aac_group = op.OptionGroup( parser, "AAC Encoder Options" )
    helpstr = """
@@ -296,8 +303,9 @@ def get_opts( argv ):
       print "ERROR: '%s' is not a valid path !!" % (exc,)
       sys.exit(-1)
 
-   # set default destination directory
-   opts.dest_dir = os.path.join( os.path.dirname(opts.base_dir), opts.enc_type)
+   # set default destination directory, if not already defined
+   if not opts.dest_dir:
+      opts.dest_dir = os.path.join(os.path.dirname(opts.base_dir),opts.enc_type)
    return opts
 
 
