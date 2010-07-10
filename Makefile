@@ -17,6 +17,7 @@ help:
 	@echo "  dist           to generate a complete source archive"
 	@echo "  release        to perform a full test/dist/install"
 	@echo "  register       to update the PyPI registration"
+	@echo "  run            for running flacsync from dev directory"
 
 .PHONY: test
 test:
@@ -62,4 +63,8 @@ release: test dist dist-test
 .PHONY: register
 register:
 	python setup.py register
+
+.PHONY: run
+run:
+	python -c 'import flacsync;flacsync.main()' ${ARGS}
 
