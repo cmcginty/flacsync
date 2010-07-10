@@ -55,8 +55,12 @@ __version__ = '0.2.2'
 __author__ = 'Patrick C. McGinty'
 __email__ = 'flacsync@tuxcoder.com'
 
+DEFAULT_ENCODER = 'aac'
+
 # define a mapping of enocoder-types to implementation class name.
-ENCODERS = {'aac':encoder.AacEncoder }
+ENCODERS = {'aac':encoder.AacEncoder,
+            'ogg':encoder.OggEncoder,
+         }
 CORES = mp.cpu_count()
 
 
@@ -189,6 +193,31 @@ def normalize_sources( base_dir, sources ):
    return list(set(map(os.path.abspath,sources)))
 
 
+def store_once( option, opt_str, value, parser, *args, **kw):
+   """Handle storage of single option, throw error if redfined."""
+   old_val = getattr(parser.values, option.dest)
+   if not (old_val is None or old_val == value):
+      raise op.OptionValueError(
+         "option '%s' can not redefine '%s' to '%s'" % (opt_str,old_val,value))
+   else:
+      setattr(parser.values, option.dest, value)
+
+
+def store_enc_opt( option, opt_str, value, parser, *args, **kw):
+   """Handle codec options, checks that matching codec is selected."""
+   # set the default encoder if it has not be defined
+   if not parser.values.enc_type:
+      parser.values.enc_type = DEFAULT_ENCODER
+
+   # check that encoder type matches the encoder option type
+   enc = parser.values.enc_type
+   if not enc or enc == args[0]:
+      setattr(parser.values, option.dest, value)
+   else:
+      raise op.OptionValueError(
+         "option '%s' is not allowed with '%s' encoder" % (opt_str,enc))
+
+
 def get_opts( argv ):
    usage = """%prog [options] BASE_DIR [SOURCE ...]
 
@@ -205,7 +234,7 @@ def get_opts( argv ):
    """
    parser = op.OptionParser(usage=usage, version="%prog "+__version__)
    parser.add_option( '-c', '--threads', dest='thread_count', default=CORES,
-         help="set max number of encoding threads (default %default)" )
+         help="set max number of encoding threads [default:%default]" )
 
    helpstr = """
       force re-encode of all files from the source dir; by default source files
@@ -214,8 +243,13 @@ def get_opts( argv ):
    parser.add_option( '-f', '--force', dest='force', default=False,
          action="store_true", help=_help_str(helpstr) )
 
-   parser.add_option( '-t', '--type', dest='enc_type', default="aac",
-         help="select the output transcode format [%default (default)]")
+   helpstr = """
+      select the output transcode format; supported values are 'aac','ogg'
+      [default:%s]""" % (DEFAULT_ENCODER,)
+   # note: the default encoder is enforced manually
+   parser.add_option( '-t', '--type', choices=ENCODERS.keys(),
+         action='callback', callback=store_once,
+         type='choice', dest='enc_type', help=_help_str(helpstr))
 
    helpstr = """
       prevent the removal of files and directories in the dest dir that have no
@@ -223,25 +257,35 @@ def get_opts( argv ):
    parser.add_option( '-o', '--ignore-orphans', dest='del_orphans',
          default=True, action="store_false", help=_help_str(helpstr) )
 
-   # ACC only options
+   # AAC only options
    aac_group = op.OptionGroup( parser, "AAC Encoder Options" )
    helpstr = """
       set the AAC encoder quality value, must be a float range of 0..1
-      [%default (default)]"""
-   aac_group.add_option( '-q', '--quality', dest='aac_q', default='0.35',
-         help=_help_str(helpstr) )
+      [default:%default]"""
+   aac_group.add_option( '-q', '--aac-quality', dest='aac_q', default='0.35',
+         action='callback', callback=store_enc_opt, callback_args=('aac',),
+         type='string', help=_help_str(helpstr) )
    parser.add_option_group( aac_group )
+
+   # OGG only options
+   ogg_group = op.OptionGroup( parser, "OGG Encoder Options" )
+   helpstr = """
+      set the Ogg Vorbis encoder quality value, must be a float range of -1..10
+      [default:%default]"""
+   ogg_group.add_option( '-g', '--ogg-quality', dest='ogg_q', default='5',
+         action='callback', callback=store_enc_opt, callback_args=('ogg',),
+        type='string', help=_help_str(helpstr) )
+   parser.add_option_group( ogg_group )
 
    # examine input args
    (opts, args) = parser.parse_args( argv )
    if not args:
       print "ERROR: BASE_DIR not defined !!"
       sys.exit(-1)
-   if opts.enc_type not in ENCODERS.keys():
-      print "ERROR: '%s' is not a valid encoder !!" % (opts.enc_type,)
-      sys.exit(-1)
 
-   # set encoder
+   # check/set encoder
+   if not opts.enc_type:
+      opts.enc_type = DEFAULT_ENCODER
    opts.EncClass = ENCODERS[opts.enc_type]
 
    # handle positional arguments

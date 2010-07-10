@@ -96,6 +96,7 @@ class AacEncoder( _Encoder ):
       self.q = aac_q
 
    def encode( self, force=False ):
+      """Return True if (re)encoding occured and no errors, False otherwise"""
       if force or util.newer( self.src, self.dst):
          self._pre_encode()
          # encode to AAC
@@ -129,4 +130,67 @@ class AacEncoder( _Encoder ):
          err = sp.call( 'neroAacTag "%s" -remove-cover:all -add-cover:front:"%s"' %
                   (self.dst, tmp_cover.name,), shell=True, stderr=NULL)
          return self._check_err( err, "AAC add-cover failed:" )
+
+
+#############################################################################
+import base64
+import struct
+class OggEncoder( _Encoder ):
+   def __init__( self, ogg_q, **kwargs  ):
+      super( OggEncoder, self).__init__( ext='.ogg', **kwargs)
+      assert type(ogg_q) == str, "q value is: %s" % (ogg_q,)
+      self.q = ogg_q
+
+   def encode( self, force=False ):
+      if force or util.newer( self.src, self.dst):
+         self._pre_encode()
+         # encode to OGG
+         err = sp.call( 'oggenc -q %s -o "%s" "%s"' %
+               (self.q, self.dst, self.src), shell=True, stderr=NULL)
+         if err == -2:  # keyboard interrupt
+            os.remove(self.dst) # clean-up partial file
+            raise KeyboardInterrupt
+         return self._check_err( err, "OGG encoder failed:" )
+      else:
+         return False
+
+   # no-op, since tags are automatically updated during encoding
+   def tag( self, artist=None, title=None, album=None, year=None, track=None,
+               genre=None, replay_gain=None ):
+      return True
+
+   # see http://flac.sourceforge.net/format.html#metadata_block_picture
+   # for more details regarding embedded vorbis pictures
+   def set_cover( self, force=False ):
+      # define METADATA_BLOCK_PICTURE binary structure
+      #     int:     Picture type, 0-20 (3=cover front)
+      #     int:     Length of MIME type string in bytes
+      #     string:  MIME type string
+      #     int:     length of description in bytes
+      #     string:  picture description
+      #     int:     picture width, pixels
+      #     int:     picture height, pixels
+      #     int:     color depth
+      #     int:     number of colors in index, 0 for non-indexeed pic
+      #     int:     length of picture data in bytes
+      #     string:  binary picture data
+      pic_block_t = "=2I %ds I %ds 5I %ds"
+      mime = 'image/jpeg'
+      description = "album cover"
+      if self.cover and (force or util.newer(self.cover,self.dst)):
+         tmp_cover = self._cover_thumbnail()
+         bin_cover = tmp_cover.read()
+         meta_block = struct.pack(
+               pic_block_t % (len(mime), len(description), len(bin_cover)),
+               3,
+               len(mime), mime,
+               len(description), description,
+               THUMBSIZE[0], THUMBSIZE[1], 24, 0,
+               len(bin_cover),
+               bin_cover)
+         meta_block = base64.b64encode(meta_block)
+         err = sp.call( 'vorbiscomment -a -t "META_BLOCK_PICTURE=%s" "%s"' %
+                 (meta_block, self.dst), shell=True, stderr=NULL)
+         return self._check_err( err, "OGG add-cover failed:" )
+
 
