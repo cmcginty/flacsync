@@ -33,7 +33,10 @@ class FlacDecoder( object ):
       'year':'date',
       'track':'tracknumber',
       'genre':'genre',
-      'replay_gain':'REPLAYGAIN_TRACK_GAIN',
+      'rg_track_gain':'replaygain_track_gain',
+      'rg_track_peak':'replaygain_track_peak',
+      'rg_album_gain':'replaygain_album_gain',
+      'rg_album_peak':'replaygain_album_peak',
       }
 
    def __init__(self, name):
