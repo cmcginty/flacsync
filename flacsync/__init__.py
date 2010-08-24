@@ -14,17 +14,18 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Recursively mirror a directory tree of FLAC audio files to AAC. Source files
-can be filtered (by sub-directory, or full path) in order to limit the files
-converted. The script will also attempt to retain all meta-data fields in the
-output files.
+Recursively mirror a directory tree of FLAC audio files to AAC/OGG. Source
+files can be filtered (by sub-directory, or full path) in order to limit the
+files converted. The script will also attempt to retain all meta-data fields in
+the output files.
 
 At a Glance
 ===========
 
-* Mirror directory tree of FLAC files audio files to AAC (re-encoded using NeroAacEnc?).
+* Mirror directory tree of FLAC files audio files to AAC/OGG (re-encoded using
+  NeroAacEnc?).
 * Filter source tree using one or more sub-directory paths.
-* By default, will only re-encode missing or out-of-date AAC files.
+* By default, will only re-encode missing or out-of-date AAC/OGG files.
 * Optionally deletes orphaned output files.
 * Multi-threaded encoding ensures full CPU utilization.
 * Supports transfer of FLAC meta-data including *title*, *artist*, *album*.
@@ -36,9 +37,10 @@ Usage Model
 
 * Hard disk space is cheap, but flash-based media players are still limited in
   capacity.
-* Create an AAC encoded "mirror" of your music files for portability.
-* Setup a daily cron job to always keep your FLAC and AAC files syncronized.
-* Re-encode your FLAC library to different AAC bit-rates in one command.
+* Create a lossy encoded "mirror" of your music files for portability.
+* Setup a daily cron job to always keep your FLAC and AAC/OGG files
+  synchronized.
+* Re-encode your FLAC library to different AAC/OGG bit-rates in one command.
 """
 
 import multiprocessing.dummy as mp

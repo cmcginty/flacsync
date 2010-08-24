@@ -36,7 +36,7 @@ setup(
    name=name,
    version=pkg.__version__,
    description="""\
-      Recursively mirror a directory tree of FLAC audio files to AAC.
+      Recursively mirror a directory tree of FLAC audio files to AAC or OGG.
       """,
    long_description=long_doc,
    author=pkg.__author__,
