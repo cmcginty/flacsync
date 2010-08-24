@@ -308,6 +308,7 @@ def get_opts( argv ):
    # set default destination directory, if not already defined
    if not opts.dest_dir:
       opts.dest_dir = os.path.join(os.path.dirname(opts.base_dir),opts.enc_type)
+   opts.dest_dir = os.path.abspath(opts.dest_dir)
    return opts
 
 
