@@ -33,7 +33,7 @@ def fname( file_, base=None, new_base=None, new_ext=None ):
 
 def newer( f1, f2 ):
    """Return True if *f1* is newer than *f2*. *f1* must exists."""
-   assert os.path.exists(f1)
+   assert os.path.exists(f1), "File not found: '%s'" %(f1,)
    return (not os.path.exists(f2) or
          os.path.getmtime(f1) > os.path.getmtime(f2))
 
