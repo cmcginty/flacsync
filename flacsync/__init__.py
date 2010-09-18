@@ -236,6 +236,7 @@ def get_opts( argv ):
    """
    parser = op.OptionParser(usage=usage, version="%prog "+__version__)
    parser.add_option( '-c', '--threads', dest='thread_count', default=CORES,
+         type='int',
          help="set max number of encoding threads [default:%default]" )
 
    helpstr = """
@@ -339,7 +340,7 @@ def main( argv=None ):
    if not encoders: return
 
    # create work pool, and add jobs
-   queue = mp.Pool( processes=CORES )
+   queue = mp.Pool( processes=opts.thread_count )
    work_obj = WorkUnit( opts, len(encoders) )
    for e in encoders:
       queue.apply_async( work_obj.do_work, (e,) )
