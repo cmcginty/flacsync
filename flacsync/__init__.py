@@ -99,7 +99,7 @@ class WorkUnit( object ):
          print self._log( file_ )
          sys.stdout.flush()
          if encoder.encode( self._opts.force ):
-            encoder.tag( **decoder.FlacDecoder(file_).tags )
+            encoder.tag( decoder.FlacDecoder(file_).tags )
             encoder.set_cover(True)  # force new cover
          else: # update cover if newer
             encoder.set_cover()

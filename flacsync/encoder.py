@@ -109,22 +109,26 @@ class AacEncoder( _Encoder ):
       else:
          return False
 
-   def tag( self, artist=None, title=None, album=None, year=None, track=None,
-               genre=None, rg_track_gain=None, rg_track_peak=None,
-               rg_album_gain=None, rg_album_peak=None):
+   def tag( self, tags ):
       # aac tags, matches order of FLAC_TAGS
       aac_fields = {
-            'artist':artist, 'title':title, 'album':album, 'year':year,
-            'track':track, 'genre':genre,
-            }
+         'artist':tags['artist'],         'title':tags['title'],
+         'album':tags['album'],           'year':tags['year'],
+         'track':tags['track'],           'genre':tags['genre'],
+         'comment':tags['comment'],       'disc':tags['disc'],
+         'totaltracks':tags['totaltracks'],
+      }
+      aac_fields = dict((k,v) for k,v in aac_fields.items() if v)
       user_fields = {
-            'replaygain_track_gain':rg_track_gain,
-            'replaygain_track_peak':rg_track_peak,
-            'replaygain_album_gain':rg_album_gain,
-            'replaygain_album_peak':rg_album_peak,
-             }
+         'writer':tags['composer'],
+         'replaygain_track_gain':tags['rg_track_gain'],
+         'replaygain_track_peak':tags['rg_track_peak'],
+         'replaygain_album_gain':tags['rg_album_gain'],
+         'replaygain_album_peak':tags['rg_album_peak'],
+      }
+      user_fields = dict((k,v) for k,v in user_fields.items() if v)
       # tag AAC file
-      sc_val = self._rg_to_soundcheck(rg_track_gain)
+      sc_val = self._rg_to_soundcheck(tags['rg_track_gain'])
       cmd = ['-meta-user:iTunNORM="%s"' % (sc_val,)]
       cmd.extend('-meta:%s="%s"'%(x,y) for x,y in aac_fields.items())
       cmd.extend('-meta-user:%s="%s"'%(x,y) for x,y in user_fields.items())
@@ -163,8 +167,7 @@ class OggEncoder( _Encoder ):
          return False
 
    # no-op, since tags are automatically updated during encoding
-   def tag( self, artist=None, title=None, album=None, year=None, track=None,
-               genre=None, replay_gain=None ):
+   def tag( self, tags):
       return True
 
    # see http://flac.sourceforge.net/format.html#metadata_block_picture
