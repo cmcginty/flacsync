@@ -1,5 +1,5 @@
 NAME=flacsync
-VER=0.3
+VER=0.3.1
 DIST_DIR=dist
 TAR=${DIST_DIR}/${NAME}-${VER}.tar.gz
 SRC_DIR=${DIST_DIR}/${NAME}-${VER}

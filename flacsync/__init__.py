@@ -53,7 +53,7 @@ from . import decoder
 from . import encoder
 from . import util
 
-__version__ = '0.3'
+__version__ = '0.3.1'
 __author__ = 'Patrick C. McGinty'
 __email__ = 'flacsync@tuxcoder.com'
 
