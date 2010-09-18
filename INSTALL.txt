@@ -16,9 +16,21 @@ Installation Steps
          cd flacsync-*
          sudo make install
 
-2. Install the Nero AAC Code binaries.
+2. Install necessary dependencies:
 
-  * The archive is located at the `Nero AAC Codec Download Page`_
+  a. Common Linux distribution packages:
+
+  * The following common distro packages are necessary:
+    - Python Imaging Library
+    - Flac tools
+    - Ogg tools
+
+  * To install in Debian/Ubuntu:
+    $ apt-get install python-imaging flac vorbis-tools
+
+  b. ACC Utils
+
+  * AAC encoding archive is located at the `Nero AAC Codec Download Page`_
   * Extract the archive files **neroAacEnc** and **neroAacTag** to any
     directory defined in your PATH statement. A recommended location would be
     either ``/usr/bin`` or ``/usr/local/bin``.
