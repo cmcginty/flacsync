@@ -1,4 +1,4 @@
 *.pyc
-MANIFEST
-.coverage
-build/
+/build/
+/flacsync.egg-info/
+/.coverage

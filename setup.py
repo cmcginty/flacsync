@@ -1,52 +1,43 @@
 #!/usr/bin/env python
 
-#  Copyright 2009, Patrick C. McGinty
-
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>
-
+#  Copyright (c) 2011, Patrick C. McGinty
+#
+#  This program is free software: you can redistribute it and/or modify it
+#  under the terms of the Simplified BSD License.
+#
+#  See LICENSE text for more details.
 """
 Distools setup file for the flacsync application.
 """
 
-import sys
 import os
-from distutils.core import setup
+from setuptools import setup
+from textwrap import dedent
 
-sys.path.insert(0,'flacsync')
 import flacsync as pkg
-name = pkg.__name__
-
-def _read( *path_name ):
-   return open( os.path.join(os.path.dirname(__file__), *path_name)).read()
-
-long_doc = pkg.__doc__ + '\n' + _read('INSTALL.txt')
+NAME     = pkg.__name__
+VERSION  = pkg.__version__
+AUTHOR   = pkg.__author__
+EMAIL    = pkg.__email__
 
 setup(
-   name=name,
-   version=pkg.__version__,
-   description="""\
-      Recursively mirror a directory tree of FLAC audio files to AAC or OGG.
-      """,
-   long_description=long_doc,
-   author=pkg.__author__,
-   author_email=pkg.__email__,
-   url='http://%s.googlecode.com' % (name,),
+   name=NAME,
+   version=VERSION,
+   description= 'Recursively mirror a directory tree of FLAC '
+                'audio files to AAC or OGG.',
+   long_description=dedent(pkg.__doc__),
+   author=AUTHOR,
+   author_email=EMAIL,
+   url='http://packages.python.org/%s/' % NAME,
    download_url=(
-      'http://%s.googlecode.com/files/%s-%s.tar.gz' %
-         (name,name,pkg.__version__,)),
-   packages=[name],
-   scripts=['scripts/%s'%(name,)],
+      'https://github.com/cmcginty/%s/raw/master/dist/%s-%s.tar.gz' %
+         (NAME,NAME,VERSION,)),
+   packages=[NAME],
+   entry_points = {
+      'console_scripts': ['flacsync = flacsync:main',],
+   },
+   keywords = 'flac aac conversion transcode compressedaudio ipod soundcheck '
+              'replaygain albumart metaflac tags neroaacenc ogg music',
    classifiers=[
       'Development Status :: 5 - Production/Stable',
       'Environment :: Console',
@@ -56,6 +47,6 @@ setup(
       'Operating System :: POSIX :: Linux',
       'Programming Language :: Python',
       'Topic :: Multimedia :: Sound/Audio :: Conversion',
-      ]
-   )
+   ]
+)
 
