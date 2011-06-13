@@ -14,6 +14,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
+   flacsync.encoder
+   ~~~~~~~~~~~~~~~~
+
    Define interface to encoders available for processing FLAC files.
 """
 
