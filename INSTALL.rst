@@ -1,39 +1,36 @@
-Installation Steps
-==================
+1. Any one of the following command will install **Flacsync**.
 
-1. Any one of the following command will install *flacsync*. Make sure to run as
-   ``root`` user:
+   a. Use ``pip`` from the `pip package <http://pypi.python.org/pypi/pip>`_::
 
-   a. Use ``easy_install`` from the `setuptools package
-      <http://peak.telecommunity.com/DevCenter/EasyInstall]>`_::
-
-         sudo easy_install flacsync
+         pip install flacsync --upgrade --use
 
    b. Download the source distribution file and install from the
       command line::
 
          tar xzf flacsync-*.tar.gz
          cd flacsync-*
-         sudo make install
+         python setup.py install --user
 
 2. Install necessary dependencies:
 
-  a. Common Linux distribution packages:
+   a. Common Linux distribution packages:
 
-  * The following common distro packages are necessary:
-    - Python Imaging Library
-    - Flac tools
-    - Ogg tools
+      The following common distro packages are necessary:
 
-  * To install in Debian/Ubuntu:
-    $ apt-get install python-imaging flac vorbis-tools
+      - Python Imaging Library
+      - Flac tools
+      - Ogg tools
 
-  b. ACC Utils
+      To install in Debian/Ubuntu::
 
-  * AAC encoding archive is located at the `Nero AAC Codec Download Page`_
-  * Extract the archive files **neroAacEnc** and **neroAacTag** to any
-    directory defined in your PATH statement. A recommended location would be
-    either ``/usr/bin`` or ``/usr/local/bin``.
+         apt-get install python-imaging flac vorbis-tools
+
+   b. ACC Utils
+
+      * AAC encoding archive is located at the `Nero AAC Codec Download Page`_
+      * Extract the archive files **neroAacEnc** and **neroAacTag** to any
+        directory defined in your PATH statement. A recommended location would
+        be either :file:`/usr/bin` or :file:`/usr/local/bin`.
 
 3. Review the usage instruction by running::
 

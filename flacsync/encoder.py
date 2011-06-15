@@ -31,14 +31,21 @@ __author__ = 'Patrick C. McGinty'
 __email__ = 'flacsync@tuxcoder.com'
 
 
+#: File handle to ``/dev/null``
 NULL = file('/dev/null')
-# list of album covers, in preferential order
+
+#: List of album covers, in preferential order.
 COVERS = ['cover.jpg', 'folder.jpg', 'front.jpg', 'album.jpg']
+#: Resolution of re-sized album covers.
 THUMBSIZE = 250,250
 
 
 #############################################################################
 class _Encoder(object):
+   """
+   Base encoder class provides common methods. This should not be used
+   directly.
+   """
    # dimensions of cover thumbnails in pixels
    def __init__( self, src, ext, base_dir, dest_dir ):
       super( _Encoder, self).__init__()
@@ -47,7 +54,7 @@ class _Encoder(object):
       self.cover = self._get_cover() or None
 
    def skip_encode( self ):
-      "Return 'True' if entire enocde step can be skipped"
+      """Return 'True' if entire encode step can be skipped."""
       encode = util.newer(self.src, self.dst)
       cover  = self.cover and util.newer(self.cover, self.dst)
       return not (encode or cover)
@@ -66,8 +73,10 @@ class _Encoder(object):
       except OSError: pass  # ignore if dir already exists
 
    def _rg_to_soundcheck( self, replay_gain ):
-      """Return the soundcheck hex string converted from a replay_gain float
-      value."""
+      """
+      Return the soundcheck hex string converted from a replay_gain float
+      value.
+      """
       if replay_gain is None:
          return None
       rg_f = float( replay_gain.split()[0])
@@ -93,13 +102,29 @@ class _Encoder(object):
 
 #############################################################################
 class AacEncoder( _Encoder ):
+   """
+   FLAC to AAC encoder.
+   """
    def __init__( self, aac_q, **kwargs  ):
+      """
+      :param aac_q:  AAC encoder quality value [0 - 1]
+      :type  aac_q:  str
+      """
       super( AacEncoder, self).__init__( ext='.m4a', **kwargs)
       assert type(aac_q) == str, "q value is: %s" % (aac_q,)
       self.q = aac_q
 
    def encode( self, force=False ):
-      """Return True if (re)encoding occured and no errors, False otherwise"""
+      """
+      Performs audio encoding process.
+
+      :param force:  When :data:`True`, encoding will be done, even if
+                     destination file exists.
+      :type  force:  boolean
+
+      :return: :data:`True` if (re)encoding occurred and no errors,
+               :data:`False` otherwise
+      """
       if force or util.newer( self.src, self.dst):
          self._pre_encode()
          # encode to AAC
@@ -113,7 +138,13 @@ class AacEncoder( _Encoder ):
          return False
 
    def tag( self, tags ):
-      # aac tags, matches order of FLAC_TAGS
+      """
+      Copies FLAC tags into destination AAC file.
+
+      :param tags: Source tag values from FLAC file.
+      :type  tags: dict
+      """
+      # AAC tags, matches order of FLAC_TAGS
       aac_fields = {
          'artist':tags['artist'],         'title':tags['title'],
          'album':tags['album'],           'year':tags['year'],
@@ -140,6 +171,13 @@ class AacEncoder( _Encoder ):
       return self._check_err( err, "AAC tag failed:" )
 
    def set_cover( self, force=False ):
+      """
+      Attach album cover image to AAC file.
+
+      :param force:  When :data:`True`, encoding will be done, even if
+                     destination file exists.
+      :type  force:  boolean
+      """
       if self.cover and (force or util.newer(self.cover,self.dst)):
          tmp_cover = self._cover_thumbnail()
          err = sp.call( 'neroAacTag "%s" -remove-cover:all -add-cover:front:"%s"' %
@@ -147,16 +185,32 @@ class AacEncoder( _Encoder ):
          return self._check_err( err, "AAC add-cover failed:" )
 
 
-#############################################################################
 import base64
 import struct
 class OggEncoder( _Encoder ):
+   """
+   FLAC to OGG encoder.
+   """
    def __init__( self, ogg_q, **kwargs  ):
+      """
+      :param ogg_q:  OGG encoder quality value [1 - 10]
+      :type  ogg_q:  str
+      """
       super( OggEncoder, self).__init__( ext='.ogg', **kwargs)
       assert type(ogg_q) == str, "q value is: %s" % (ogg_q,)
       self.q = ogg_q
 
    def encode( self, force=False ):
+      """
+      Performs audio encoding process.
+
+      :param force:  When :data:`True`, encoding will be done, even if
+                     destination file exists.
+      :type  force:  boolean
+
+      :return: :data:`True` if (re)encoding occurred and no errors,
+               :data:`False` otherwise
+      """
       if force or util.newer( self.src, self.dst):
          self._pre_encode()
          # encode to OGG
@@ -169,13 +223,31 @@ class OggEncoder( _Encoder ):
       else:
          return False
 
-   # no-op, since tags are automatically updated during encoding
    def tag( self, tags):
+      """
+      No-op, since tags are automatically updated during encoding.
+
+      :return: :data:`True`
+      """
       return True
 
-   # see http://flac.sourceforge.net/format.html#metadata_block_picture
-   # for more details regarding embedded vorbis pictures
    def set_cover( self, force=False ):
+      """
+      Attach album cover image to OGG file.
+
+      This function is experimental, since not many players support embedded
+      images in OGG files.
+
+      .. seealso::
+
+         Refer to the `METADATA_BLOCK_PICTURE
+         <http://flac.sourceforge.net/format.html#metadata_block_picture>`_
+         specification for more details regarding embedded vorbis images.
+
+      :param force:  When :data:`True`, encoding will be done, even if
+                     destination file exists.
+      :type  force:  boolean
+      """
       # define METADATA_BLOCK_PICTURE binary structure
       #     int:     Picture type, 0-20 (3=cover front)
       #     int:     Length of MIME type string in bytes
@@ -185,7 +257,7 @@ class OggEncoder( _Encoder ):
       #     int:     picture width, pixels
       #     int:     picture height, pixels
       #     int:     color depth
-      #     int:     number of colors in index, 0 for non-indexeed pic
+      #     int:     number of colors in index, 0 for non-indexed pic
       #     int:     length of picture data in bytes
       #     string:  binary picture data
       pic_block_t = "=2I %ds I %ds 5I %ds"
