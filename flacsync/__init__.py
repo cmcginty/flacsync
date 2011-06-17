@@ -144,6 +144,7 @@ DEFAULT_ENCODER = 'aac'
 # define a mapping of enocoder-types to implementation class name.
 ENCODERS = {'aac':encoder.AacEncoder,
             'ogg':encoder.OggEncoder,
+            'mp3':encoder.Mp3Encoder,
          }
 CORES = mp.cpu_count()
 
@@ -481,8 +482,18 @@ def get_opts( argv ):
       [default:%default]"""
    ogg_group.add_option( '-g', '--ogg-quality', dest='ogg_q', default='5',
          action='callback', callback=store_enc_opt, callback_args=('ogg',),
-        type='string', help=_help_str(helpstr) )
+         type='string', help=_help_str(helpstr) )
    parser.add_option_group( ogg_group )
+
+   # MP3 only options
+   mp3_group = op.OptionGroup( parser, "MP3 Encoder Options" )
+   helpstr = """
+      set the Lame MP3 encoder quality value, must be a initeger range of 9..0
+      [default:%default]"""
+   mp3_group.add_option( '-m', '--mp3-quality', dest='mp3_q', default='3',
+         action='callback', callback=store_enc_opt, callback_args=('mp3',),
+         type='string', help=_help_str(helpstr) )
+   parser.add_option_group( mp3_group )
 
    # examine input args
    (opts, args) = parser.parse_args( argv )

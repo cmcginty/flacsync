@@ -279,3 +279,57 @@ class OggEncoder( _Encoder ):
          return self._check_err( err, "OGG add-cover failed:" )
 
 
+from mutagen.easyid3 import EasyID3
+from mutagen.mp3 import MP3
+from mutagen.id3 import APIC
+class Mp3Encoder( _Encoder ):
+   def __init__( self, mp3_q, **kwargs  ):
+      super( Mp3Encoder, self).__init__( ext='.mp3', **kwargs)
+      assert type(mp3_q) == str, "q value is: %s" % (mp3_q,)
+      self.q = mp3_q
+
+   def encode( self, force=False ):
+      if force or util.newer( self.src, self.dst):
+         self._pre_encode()
+         # encode to MP3
+         #   --add-id3v2 forces creation of an empty tag
+         err = sp.call( 'flac -d "%s" -c -s | lame --add-id3v2 -V %s - "%s"' %
+               (self.src, self.q, self.dst), shell=True, stderr=NULL)
+         if err == -2:  # keyboard interrupt
+            os.remove(self.dst) # clean-up partial file
+            raise KeyboardInterrupt
+         return self._check_err( err, "MP3 encoder failed:" )
+      else:
+         return False
+
+   # uses mutagen tagging library
+   def tag( self, tags):
+      mp3_fields = {
+         'artist':tags['artist'],         'title':tags['title'],
+         'album':tags['album'],           'date':tags['year'],
+         'tracknumber':tags['track'],     'genre':tags['genre'],
+         'discnumber':tags['disc'],       'composer':tags['composer'],
+         'replaygain_track_gain':tags['rg_track_gain'],
+         'replaygain_track_peak':tags['rg_track_peak'],
+         'replaygain_album_gain':tags['rg_album_gain'],
+         'replaygain_album_peak':tags['rg_album_peak'],
+      }
+      mp3_fields = dict((k,v) for k,v in mp3_fields.items() if v)
+      # tag MP3 file
+      audio = EasyID3(self.dst)
+      for x,y in mp3_fields.items():
+        audio[x] = y
+      err = audio.save()
+      return self._check_err( err, "MP3 tag failed:" )
+
+   # See section 4.14 at http://www.id3.org/id3v2.4.0-frames
+   # for more details regarding embedded ID3 pictures
+   def set_cover( self, force=False ):
+     if self.cover and (force or util.newer(self.cover,self.dst)):
+         tmp_cover = self._cover_thumbnail()
+         imagedata = open(tmp_cover.name, 'rb').read()
+         audio = MP3(self.dst)
+         audio.tags.add(APIC(encoding=3, mime="image/jpeg", type=3, desc="Front Cover", data=imagedata))
+         err = audio.save()
+     return self._check_err( err, "MP3 add-cover failed:" )
+
