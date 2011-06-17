@@ -137,26 +137,34 @@ class AacEncoder( _Encoder ):
       """
       # AAC tags, matches order of FLAC_TAGS
       aac_fields = {
-         'artist':tags['artist'],         'title':tags['title'],
-         'album':tags['album'],           'year':tags['year'],
-         'track':tags['track'],           'genre':tags['genre'],
-         'comment':tags['comment'],       'disc':tags['disc'],
+         'artist' :tags['artist'],        'title':tags['title'],
+         'album'  :tags['album'],         'year' :tags['year'],
+         'track'  :tags['track'],         'genre':tags['genre'],
+         'comment':tags['comment'],       'disc' :tags['disc'],
+         'composer':tags['composer'],
          'totaltracks':tags['totaltracks'],
       }
       aac_fields = dict((k,v) for k,v in aac_fields.items() if v)
+      # itunes fields:
+      #     'album artist' contentgroup description episode episodename
+      #     itunescompilation itunespodcast network season show sortalbum
+      #     sortartist sortband sortshow sorttitle sortwriter writer
       user_fields = {
-         'writer':tags['composer'],
+         'writer'          :tags['composer'],
+         'album artist'    :tags['album_artist'],
+         'albumartist'     :tags['album_artist'],
+         'compilation'     :tags['compilation'],
+         'itunescompilation':tags['compilation'],
          'replaygain_track_gain':tags['rg_track_gain'],
          'replaygain_track_peak':tags['rg_track_peak'],
          'replaygain_album_gain':tags['rg_album_gain'],
          'replaygain_album_peak':tags['rg_album_peak'],
+         'iTunNORM':self._rg_to_soundcheck(tags['rg_track_gain']),
       }
       user_fields = dict((k,v) for k,v in user_fields.items() if v)
       # tag AAC file
-      sc_val = self._rg_to_soundcheck(tags['rg_track_gain'])
-      cmd = ['-meta-user:iTunNORM="%s"' % (sc_val,)]
-      cmd.extend('-meta:%s="%s"'%(x,y) for x,y in aac_fields.items())
-      cmd.extend('-meta-user:%s="%s"'%(x,y) for x,y in user_fields.items())
+      cmd = ['-meta:"%s"="%s"'%(x,y) for x,y in aac_fields.items()]
+      cmd += ['-meta-user:"%s"="%s"'%(x,y) for x,y in user_fields.items()]
       err = sp.call( 'neroAacTag "%s" %s' % (self.dst,' '.join(cmd)),
             shell=True, stderr=NULL)
       return self._check_err( err, "AAC tag failed:" )

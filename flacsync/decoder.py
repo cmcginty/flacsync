@@ -24,28 +24,30 @@ class FlacDecoder( object ):
    """
    #: Dictionary mapping from flacsync name -> FLAC tag name
    FLAC_TAGS = {
-      'album':'album',
-      'artist':'artist',
-      'comment':'comment',
-      'composer':'composer',
-      'copyright':'copyright',
-      'description':'description',
-      'disc':'discnumber',
-      'genre':'genre',
-      'license':'license',
-      'performer':'performer',
-      'title':'title',
-      'track':'tracknumber',
-      'totaltracks':'tracktotal',
-      'year':'date',
-      'rg_track_gain':'replaygain_track_gain',
-      'rg_track_peak':'replaygain_track_peak',
-      'rg_album_gain':'replaygain_album_gain',
-      'rg_album_peak':'replaygain_album_peak',
+      'album'           :'album',
+      'album_artist'    :'albumartist',
+      'artist'          :'artist',
+      'comment'         :'comment',
+      'compilation'     :'compilation',
+      'composer'        :'composer',
+      'copyright'       :'copyright',
+      'description'     :'description',
+      'disc'            :'discnumber',
+      'enc_by'          :'encoded-by',
+      'genre'           :'genre',
+      'license'         :'license',
+      'performer'       :'performer',
+      'rg_album_gain'   :'replaygain_album_gain',
+      'rg_album_peak'   :'replaygain_album_peak',
+      'rg_track_gain'   :'replaygain_track_gain',
+      'rg_track_peak'   :'replaygain_track_peak',
+      'title'           :'title',
+      'totaltracks'     :'tracktotal',
+      'track'           :'tracknumber',
+      'year'            :'date',
       }
 
    def __init__(self, name):
-
       self.name = name
 
    @property
@@ -57,29 +59,32 @@ class FlacDecoder( object ):
       Key                  Description
       ===================  =====================
       ``album``            Album title
+      ``album_artist``     Album artist name
       ``artist``           Artist name
       ``comment``
+      ``compilation``
       ``composer``         Composer name
       ``copyright``
       ``description``
       ``disc``             Disc number
+      ``enc_by``           Encoder string
       ``genre``            Genre string
       ``license``
       ``performer``        Performer name
-      ``title``            Track title
-      ``track``            Track number
-      ``totaltracks``      Total album tracks
-      ``year``             Year (20XX)
-      ``rg_track_gain``    Track replay gain
-      ``rg_track_peak``    Track peak
       ``rg_album_gain``    Album replay gain
       ``rg_album_peak``    Album peak
+      ``rg_track_gain``    Track replay gain
+      ``rg_track_peak``    Track peak
+      ``title``            Track title
+      ``totaltracks``      Total album tracks
+      ``track``            Track number
+      ``year``             Year (20XX)
       ===================  =====================
       """
       return dict((k,self._read_tag(v)) for k,v in self.FLAC_TAGS.items())
 
    def _read_tag(self,field):
-      val = sp.Popen( 'metaflac --show-tag=%s "%s"' % (field,self.name),
+      val = sp.Popen( 'metaflac --show-tag="%s" "%s"' % (field,self.name),
             shell=True, stdout=sp.PIPE).communicate()[0]
       return val.split('=')[1].strip() if val else None
 
