@@ -201,9 +201,9 @@ class WorkUnit( object ):
          sys.stdout.flush()
          if encoder.encode( self._opts.force ):
             encoder.tag( decoder.FlacDecoder(file_).tags )
-            encoder.set_cover(True)  # force new cover
+            encoder.set_cover(True, self._opts.art_resize)  # force new cover
          else: # update cover if newer
-            encoder.set_cover()
+            encoder.set_cover(False, self._opts.art_resize)
       except KeyboardInterrupt:
          self.abort = True
       except Exception as exc:
@@ -465,6 +465,12 @@ def get_opts( argv ):
    parser.add_option( '-d', '--destination', dest='dest_dir',
          help=_help_str(helpstr) )
 
+   helpstr = """
+      enable resizing of cover art; by default the art that is found will be
+      saved to file without resizing."""
+   parser.add_option( '-r', '--resize', dest='art_resize', default=False,
+         action="store_true", help=_help_str(helpstr) )
+
    # AAC only options
    aac_group = op.OptionGroup( parser, "AAC Encoder Options" )
    helpstr = """
@@ -563,4 +569,3 @@ def main( argv=None ):
       queue.join()
    except KeyboardInterrupt:
       work_obj.abort = True
-

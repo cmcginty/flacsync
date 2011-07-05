@@ -74,10 +74,11 @@ class _Encoder(object):
       sc = 1000 * pow(10,(-rg_f/10.0))
       return ' '.join(["%08X" % (sc,)]*10)
 
-   def _cover_thumbnail( self ):
+   def _cover_thumbnail( self, resize=False ):
       assert self.cover    # cover must be valid
       im = Image.open( self.cover)
-      im.thumbnail( THUMBSIZE)
+      if resize:
+         im.thumbnail( THUMBSIZE)
       ofile = tempfile.NamedTemporaryFile()
       im.save( ofile.name, "JPEG")
       return ofile
@@ -169,16 +170,20 @@ class AacEncoder( _Encoder ):
             shell=True, stderr=NULL)
       return self._check_err( err, "AAC tag failed:" )
 
-   def set_cover( self, force=False ):
+   def set_cover( self, force=False, resize=False ):
       """
       Attach album cover image to AAC file.
 
       :param force:  When :data:`True`, encoding will be done, even if
                      destination file exists.
       :type  force:  boolean
+
+      :param resize:  When :data:`True`, cover art will be resized to
+                      predefined size.
+      :type  resize:  boolean
       """
       if self.cover and (force or util.newer(self.cover,self.dst)):
-         tmp_cover = self._cover_thumbnail()
+         tmp_cover = self._cover_thumbnail(resize)
          err = sp.call( 'neroAacTag "%s" -remove-cover:all -add-cover:front:"%s"' %
                   (self.dst, tmp_cover.name,), shell=True, stderr=NULL)
          return self._check_err( err, "AAC add-cover failed:" )
@@ -230,7 +235,7 @@ class OggEncoder( _Encoder ):
       """
       return True
 
-   def set_cover( self, force=False ):
+   def set_cover( self, force=False, resize=False ):
       """
       Attach album cover image to OGG file.
 
@@ -246,6 +251,10 @@ class OggEncoder( _Encoder ):
       :param force:  When :data:`True`, encoding will be done, even if
                      destination file exists.
       :type  force:  boolean
+
+      :param resize:  When :data:`True`, cover art will be resized to
+                      predefined size.
+      :type  resize:  boolean
       """
       # define METADATA_BLOCK_PICTURE binary structure
       #     int:     Picture type, 0-20 (3=cover front)
@@ -263,7 +272,7 @@ class OggEncoder( _Encoder ):
       mime = 'image/jpeg'
       description = "album cover"
       if self.cover and (force or util.newer(self.cover,self.dst)):
-         tmp_cover = self._cover_thumbnail()
+         tmp_cover = self._cover_thumbnail(resize)
          bin_cover = tmp_cover.read()
          meta_block = struct.pack(
                pic_block_t % (len(mime), len(description), len(bin_cover)),
@@ -324,12 +333,11 @@ class Mp3Encoder( _Encoder ):
 
    # See section 4.14 at http://www.id3.org/id3v2.4.0-frames
    # for more details regarding embedded ID3 pictures
-   def set_cover( self, force=False ):
+   def set_cover( self, force=False, resize=False ):
      if self.cover and (force or util.newer(self.cover,self.dst)):
-         tmp_cover = self._cover_thumbnail()
+         tmp_cover = self._cover_thumbnail(resize)
          imagedata = open(tmp_cover.name, 'rb').read()
          audio = MP3(self.dst)
          audio.tags.add(APIC(encoding=3, mime="image/jpeg", type=3, desc="Front Cover", data=imagedata))
          err = audio.save()
      return self._check_err( err, "MP3 add-cover failed:" )
-
