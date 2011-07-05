@@ -12,6 +12,7 @@
 """
 
 import os
+import shutil
 import subprocess as sp
 import tempfile
 import Image
@@ -43,12 +44,19 @@ class _Encoder(object):
       self.src = src
       self.dst = util.fname(src, base_dir, dest_dir, ext)
       self.cover = self._get_cover() or None
+      if self.cover:
+         self.cover_dst = util.fname(self.cover, base_dir, dest_dir)
 
    def skip_encode( self ):
       """Return 'True' if entire encode step can be skipped."""
       encode = util.newer(self.src, self.dst)
       cover  = self.cover and util.newer(self.cover, self.dst)
       return not (encode or cover)
+
+   def copy_cover( self, force=False ):
+      """Copies cover art to destination folder."""
+      if self.cover and (force or util.newer(self.cover,self.cover_dst)):
+         shutil.copyfile(self.cover, self.cover_dst)
 
    def _get_cover( self ):
       root,_,files = os.walk( os.path.dirname(self.src)).next()
@@ -334,10 +342,12 @@ class Mp3Encoder( _Encoder ):
    # See section 4.14 at http://www.id3.org/id3v2.4.0-frames
    # for more details regarding embedded ID3 pictures
    def set_cover( self, force=False, resize=False ):
-     if self.cover and (force or util.newer(self.cover,self.dst)):
+      if self.cover and (force or util.newer(self.cover,self.dst)):
          tmp_cover = self._cover_thumbnail(resize)
          imagedata = open(tmp_cover.name, 'rb').read()
+         pic = APIC(encoding=3, mime="image/jpeg", type=3, desc="Front Cover",
+                    data=imagedata)
          audio = MP3(self.dst)
-         audio.tags.add(APIC(encoding=3, mime="image/jpeg", type=3, desc="Front Cover", data=imagedata))
+         audio.tags.add(pic)
          err = audio.save()
-     return self._check_err( err, "MP3 add-cover failed:" )
+      return self._check_err( err, "MP3 add-cover failed:" )

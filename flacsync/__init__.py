@@ -204,6 +204,9 @@ class WorkUnit( object ):
             encoder.set_cover(True, self._opts.art_resize)  # force new cover
          else: # update cover if newer
             encoder.set_cover(False, self._opts.art_resize)
+         # copy cover art
+         if self._opts.art_copy:
+            encoder.copy_cover( self._opts.force )
       except KeyboardInterrupt:
          self.abort = True
       except Exception as exc:
@@ -469,6 +472,12 @@ def get_opts( argv ):
       enable resizing of cover art; by default the art that is found will be
       saved to file without resizing."""
    parser.add_option( '-r', '--resize', dest='art_resize', default=False,
+         action="store_true", help=_help_str(helpstr) )
+
+   helpstr = """
+      in addition to embedding cover art, copy image file directly to
+      the desination sub-folder."""
+   parser.add_option( '-j', '--copy-cover-art', dest='art_copy', default=False,
          action="store_true", help=_help_str(helpstr) )
 
    # AAC only options
