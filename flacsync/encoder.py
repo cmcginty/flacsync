@@ -300,12 +300,29 @@ from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
 from mutagen.id3 import APIC
 class Mp3Encoder( _Encoder ):
+   """
+   FLAC to MP3 encoder.
+   """
    def __init__( self, mp3_q, **kwargs  ):
+      """
+      :param mp3_q:  MP3 VBR encoder quality value [0 - 9]
+      :type  mp3_q:  str
+      """
       super( Mp3Encoder, self).__init__( ext='.mp3', **kwargs)
       assert type(mp3_q) == str, "q value is: %s" % (mp3_q,)
       self.q = mp3_q
 
    def encode( self, force=False ):
+      """
+      Performs audio encoding process.
+
+      :param force:  When :data:`True`, encoding will be done, even if
+                     destination file exists.
+      :type  force:  boolean
+
+      :return: :data:`True` if (re)encoding occurred and no errors,
+               :data:`False` otherwise
+      """
       if force or util.newer( self.src, self.dst):
          self._pre_encode()
          # encode to MP3
@@ -321,6 +338,12 @@ class Mp3Encoder( _Encoder ):
 
    # uses mutagen tagging library
    def tag( self, tags):
+      """
+      Copies FLAC tags into destination MP3 file.
+
+      :param tags: Source tag values from FLAC file.
+      :type  tags: dict
+      """
       mp3_fields = {
          'artist':tags['artist'],         'title':tags['title'],
          'album':tags['album'],           'date':tags['year'],
@@ -342,6 +365,17 @@ class Mp3Encoder( _Encoder ):
    # See section 4.14 at http://www.id3.org/id3v2.4.0-frames
    # for more details regarding embedded ID3 pictures
    def set_cover( self, force=False, resize=False ):
+      """
+      Attach album cover image to MP3 file.
+
+      :param force:  When :data:`True`, encoding will be done, even if
+                     destination file exists.
+      :type  force:  boolean
+
+      :param resize:  When :data:`True`, cover art will be resized to
+                      predefined size.
+      :type  resize:  boolean
+      """
       if self.cover and (force or util.newer(self.cover,self.dst)):
          tmp_cover = self._cover_thumbnail(resize)
          imagedata = open(tmp_cover.name, 'rb').read()
