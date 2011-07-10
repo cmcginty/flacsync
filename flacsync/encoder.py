@@ -379,7 +379,7 @@ class Mp3Encoder( _Encoder ):
       if self.cover and (force or util.newer(self.cover,self.dst)):
          tmp_cover = self._cover_thumbnail(resize)
          imagedata = open(tmp_cover.name, 'rb').read()
-         pic = APIC(encoding=3, mime="image/jpeg", type=3, desc="Front Cover",
+         pic = APIC(encoding=3, mime="image/jpeg", type=3, desc=u"Front Cover",
                     data=imagedata)
          audio = MP3(self.dst)
          audio.tags.add(pic)
