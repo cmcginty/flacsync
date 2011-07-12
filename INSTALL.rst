@@ -19,11 +19,12 @@
 
       - Python Imaging Library
       - Flac tools
-      - Ogg tools
+      - Ogg tools (optional)
+      - Lame (optional)
 
       To install in Debian/Ubuntu::
 
-         apt-get install python-imaging flac vorbis-tools
+         apt-get install python-imaging flac vorbis-tools lame
 
    b. ACC Utils
 

@@ -1,21 +1,23 @@
 
-Recursively mirror a directory tree of FLAC audio files to AAC/OGG. Source
-files can be filtered (by sub-directory, or full path) in order to limit the
-files converted. The script will also attempt to retain all meta-data fields
-in the output files.
+Recursively mirror a directory tree of FLAC audio files to AAC/OGG/MP3.
+Source files can be filtered (by sub-directory, or full path) in order to
+limit the files converted. The script will also attempt to retain all
+meta-data fields in the output files.
 
 At a Glance
 ===========
 
-* Mirror directory tree of FLAC files audio files to AAC/OGG (re-encoded
-  using NeroAacEnc).
+* Mirror directory tree of FLAC files audio files to AAC/OGG/MP3 (re-encoded
+  using NeroAacEnc, oggenc, or LAME).
 * Filter source tree using one or more sub-directory paths.
-* By default, will only re-encode missing or out-of-date AAC/OGG files.
+* By default, will only re-encode missing or out-of-date AAC/OGG/MP3 files.
 * Optionally deletes orphaned output files.
 * Multi-threaded encoding ensures full CPU utilization.
 * Supports transfer of FLAC meta-data including *title*, *artist*, *album*.
 * Converts FLAC replaygain field to Apple iTunes Sound Check.
-* Resizes and embeds album cover art JPEG files to destination files.
+* Optionally resizes and embeds album cover art JPEG files to destination
+  files.
+* Optionally copy cover art to destination directories.
 
 Usage Model
 ===========
@@ -65,7 +67,7 @@ directory.
 
 -t ENC_TYPE, --type=ENC_TYPE
                      select the output transcode format; supported values
-                     are 'aac','ogg' [default:aac]
+                     are 'aac','ogg','mp3' [default:aac]
 
 -o, --ignore-orphans
                      prevent the removal of files and directories in the
@@ -76,6 +78,14 @@ directory.
                      override the default. The standard default destination
                      directory will be created in the same parent directory
                      of BASE_DIR. See BASE_DIR above.
+
+-r, --resize         enable resizing of cover art; by default the art that
+                     is found will be saved to file without resizing.
+
+-j, --copy-cover-art
+                     in addition to embedding cover art, copy image file
+                     directly to the desination sub-folder.
+
 
 AAC Encoder Options:
 ---------------------
@@ -89,6 +99,13 @@ OGG Encoder Options:
  -g OGG_Q, --ogg-quality=OGG_Q
                      set the Ogg Vorbis encoder quality value, must be a
                      float range of -1..10 [default:5]
+
+MP3 Encoder Options:
+--------------------
+ -m MP3_Q, --mp3-quality=MP3_Q
+                     set the Lame MP3 encoder quality value, must be a
+                     initeger range of 0..9 [default:3]
+
 
 Examples
 ========
