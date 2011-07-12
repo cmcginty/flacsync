@@ -33,7 +33,7 @@ cover:
 	nosetests -w ${NAME} --with-coverage --cover-package=${NAME} --cover-erase --cover-inclusive
 
 .PHONY: install
-install:
+install: test
 	python setup.py install --user
 
 .PHONY: clean
@@ -62,7 +62,7 @@ dist: doc
 	make clean
 
 .PHONY: dist-test
-dist-test:
+dist-test: dist
 	tar xzf ${TAR} -C ${DIST_DIR}
 	make -C ${SRC_DIR} install
 	rm -rf ${SRC_DIR}
