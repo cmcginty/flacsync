@@ -3,6 +3,8 @@
 """
 
 from __future__ import absolute_import
+
+import unittest
 from nose.tools import *
 from mock import *
 
@@ -13,7 +15,7 @@ __author__ = 'Patrick C. McGinty'
 __email__ = 'flacsync@tuxcoder.com'
 
 
-class TestCovers():
+class TestCovers(unittest.TestCase):
    WALK_VALUE = [('root_dir', 'dummy',
                         ('file1.flac','file2.flac','cover.jpg'))]
 
