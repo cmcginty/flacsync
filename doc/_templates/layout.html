@@ -1,0 +1,11 @@
+{% extends "!layout.html" %}
+
+{# add javascript files #}
+{% set script_files = script_files + [pathto("_static/flattr.js",1)] %}
+
+{# update static links in the relbar #}
+{% block rootrellink %}
+<li style="padding-left:60px;"><a href={{ pathto('index') }}>Top </a> |&nbsp;</li>
+<li><a href={{ pathto(master_doc) }}>Contents </a> |&nbsp;</li>
+<li><a href={{ pathto('search') }}>Search </a></li>
+{% endblock %}

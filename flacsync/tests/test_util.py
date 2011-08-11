@@ -3,6 +3,8 @@
 """
 
 from __future__ import absolute_import
+
+import unittest
 from nose.tools import *
 from mock import *
 
@@ -12,7 +14,7 @@ __author__ = 'Patrick C. McGinty'
 __email__ = 'flacsync@tuxcoder.com'
 
 
-class TestUtil():
+class TestUtil(unittest.TestCase):
    @patch( 'os.path.exists' )
    @patch( 'os.path.getmtime' )
    def test_is_cover_newer_true(self, mock_getmtime, mock_exists):

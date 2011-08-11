@@ -3,6 +3,8 @@
 """
 
 from __future__ import absolute_import
+
+import unittest
 from nose.tools import *
 from mock import *
 
@@ -12,15 +14,15 @@ __author__ = 'Patrick C. McGinty'
 __email__ = 'flacsync@tuxcoder.com'
 
 
-class TestMainCmdArgs():
+class TestMainCmdArgs(unittest.TestCase):
 
-   def setup(self):
+   def setUp(self):
       self.f_enc_orig = flacsync.ENCODERS
       self.mock_aac_enc = Mock()
       # mock encoder object dict object
       flacsync.ENCODERS = {'aac':self.mock_aac_enc}
 
-   def teardown(self):
+   def tearDown(self):
       flacsync.ENCODERS = self.f_enc_orig
 
    @patch('multiprocessing.dummy.Pool')

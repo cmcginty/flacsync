@@ -1,3 +1,5 @@
-include *.txt
+include CHANGELOG.rst
+include LICENSE
+include INSTALL.rst
+include README
 include Makefile
-include INSTALL.txt
