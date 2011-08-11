@@ -3,7 +3,7 @@
 #
 
 NAME=flacsync
-VER=0.3.1
+VER=0.3.2
 DIST_DIR=dist
 TAR=${DIST_DIR}/${NAME}-${VER}.tar.gz
 HTML_ZIP=${DIST_DIR}/${NAME}-html-${VER}.zip
