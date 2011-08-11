@@ -84,7 +84,12 @@ class FlacDecoder( object ):
       return dict((k,self._read_tag(v)) for k,v in self.FLAC_TAGS.items())
 
    def _read_tag(self,field):
-      val = sp.Popen( 'metaflac --show-tag="%s" "%s"' % (field,self.name),
+      lines = sp.Popen( 'metaflac --show-tag="%s" "%s"' % (field,self.name),
             shell=True, stdout=sp.PIPE).communicate()[0]
-      return val.split('=')[1].strip() if val else None
+      tags = []
+      for l in lines.splitlines():
+         key_val = l.split('=',1)
+         if len(key_val) == 2:
+            tags.append(key_val[1].strip())
+      return ' - '.join(tags) if tags else None
 
