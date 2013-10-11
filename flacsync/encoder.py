@@ -15,7 +15,10 @@ import os
 import shutil
 import subprocess as sp
 import tempfile
-import Image
+try:
+  import Image
+except ImportError:
+  import PIL.Image as Image
 
 from . import util
 
