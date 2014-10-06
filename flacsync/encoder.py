@@ -15,6 +15,7 @@ import os
 import shutil
 import subprocess as sp
 import tempfile
+import hashlib
 try:
   import Image
 except ImportError:
@@ -46,7 +47,7 @@ class _Encoder(object):
       super( _Encoder, self).__init__()
       self.src = src
       self.dst = util.fname(src, base_dir, dest_dir, ext)
-      self.cover = self._get_cover() or None
+      self.cover = self._get_cover() or self._get_embedded_cover() or None
       if self.cover:
          self.cover_dst = util.fname(self.cover, base_dir, dest_dir)
 
@@ -69,6 +70,42 @@ class _Encoder(object):
       except StopIteration:
          pass
 
+   def _get_tempdir( self ):
+      tempdir = os.path.join(tempfile.gettempdir(),'flacsync-tmp')
+
+      # create the tempdir if not present
+      if not os.path.isdir(tempdir):
+         os.makedirs(tempdir,0700)
+
+      # give up if other processes can write to the tempdir
+      if os.name == 'posix' and oct(os.stat(tempdir).st_mode) != '040700':
+         print "WARN: directory " + tempdir + " has unsafe permissions " + oct(os.stat(tempdir).st_mode) + " not writing cover art, please remove dir."
+	 return None
+
+      return tempdir
+
+   def _get_embedded_cover( self ):
+      picture = None
+      try:
+         # get the default embedded picture with metaflac
+         picture = sp.Popen( 'metaflac --export-picture-to=- "%s"' % (self.src), shell=True, stdout=sp.PIPE).communicate()[0]
+      except:
+         return None
+      # write the cover to a deterministic filename based on hash
+      h = hashlib.md5()
+      h.update(picture)
+      tempdir = self._get_tempdir()
+      # if not tempdir don't write
+      if not tempdir:
+        return None
+      fn = os.path.join(tempdir,h.hexdigest())
+      # reuse file if this cover is already stored
+      if not os.path.isfile(fn):
+         fh = open(fn, 'w')
+         fh.write(picture)
+         fh.close()
+      return fn
+
    def _pre_encode( self ):
       try:
          os.makedirs( os.path.dirname(self.dst) )
@@ -87,7 +124,7 @@ class _Encoder(object):
 
    def _cover_thumbnail( self, resize=False ):
       assert self.cover    # cover must be valid
-      im = Image.open( self.cover)
+      im = Image.open( self.cover )
       if resize:
          im.thumbnail( THUMBSIZE)
       ofile = tempfile.NamedTemporaryFile()
